@@ -2,6 +2,8 @@ import torch
 import torch.nn as nn
 import numpy as np
 from .spline import *
+#from .spline_monotone import *
+from .spline_monotone import coef2curve_monotonic
 from .utils import sparse_mask
 
 
@@ -41,7 +43,7 @@ class KANLayer(nn.Module):
             device
     """
 
-    def __init__(self, in_dim=3, out_dim=2, num=5, k=3, noise_scale=0.5, scale_base_mu=0.0, scale_base_sigma=1.0, scale_sp=1.0, base_fun=torch.nn.SiLU(), grid_eps=0.02, grid_range=[-1, 1], sp_trainable=True, sb_trainable=True, save_plot_data = True, device='cpu', sparse_init=False):
+    def __init__(self, in_dim=3, out_dim=2, num=5, k=3, noise_scale=0.5, scale_base_mu=0.0, scale_base_sigma=1.0, scale_sp=1.0, base_fun=torch.nn.SiLU(), grid_eps=0.02, grid_range=[-1, 1], sp_trainable=True, sb_trainable=True, save_plot_data = True, device='cpu', sparse_init=False, mode=None, native_noise_scale=False):
         ''''
         initialize a KANLayer
         
@@ -94,11 +96,16 @@ class KANLayer(nn.Module):
         self.in_dim = in_dim
         self.num = num
         self.k = k
+        self.mode = mode
 
         grid = torch.linspace(grid_range[0], grid_range[1], steps=num + 1)[None,:].expand(self.in_dim, num+1)
         grid = extend_grid(grid, k_extend=k)
         self.grid = torch.nn.Parameter(grid).requires_grad_(False)
-        noises = (torch.rand(self.num+1, self.in_dim, self.out_dim) - 1/2) * noise_scale / num
+
+        if native_noise_scale:        
+            noises = (torch.rand(self.num+1, self.in_dim, self.out_dim) - 1/2) * noise_scale #/ num
+        else:
+            noises = (torch.rand(self.num+1, self.in_dim, self.out_dim) - 1/2) * noise_scale / num
 
         self.coef = torch.nn.Parameter(curve2coef(self.grid[:,k:-k].permute(1,0), noises, self.grid, k))
         
@@ -150,15 +157,27 @@ class KANLayer(nn.Module):
         >>> y, preacts, postacts, postspline = model(x)
         >>> y.shape, preacts.shape, postacts.shape, postspline.shape
         '''
+     
+        # CHANGED
+        #x = torch.tanh(x)
+     
         batch = x.shape[0]
         preacts = x[:,None,:].clone().expand(batch, self.out_dim, self.in_dim)
-            
+        
+     
         base = self.base_fun(x) # (batch, in_dim)
-        y = coef2curve(x_eval=x, grid=self.grid, coef=self.coef, k=self.k)
+
+        if self.mode == None:
+            y = coef2curve(x_eval=x, grid=self.grid, coef=self.coef, k=self.k)
+        else:
+            y = coef2curve_monotonic(x_eval=x, grid=self.grid, coef=self.coef, k=self.k, mode=self.mode)
         
         postspline = y.clone().permute(0,2,1)
-            
-        y = self.scale_base[None,:,:] * base[:,:,None] + self.scale_sp[None,:,:] * y
+        
+        # CHANGED
+        #y = self.scale_base[None,:,:] * base[:,:,None] + self.scale_sp[None,:,:] * y
+        #y = torch.tanh(y)
+
         y = self.mask[None,:,:] * y
         
         postacts = y.clone().permute(0,2,1)
@@ -191,7 +210,12 @@ class KANLayer(nn.Module):
         batch = x.shape[0]
         #x = torch.einsum('ij,k->ikj', x, torch.ones(self.out_dim, ).to(self.device)).reshape(batch, self.size).permute(1, 0)
         x_pos = torch.sort(x, dim=0)[0]
-        y_eval = coef2curve(x_pos, self.grid, self.coef, self.k)
+        #y_eval = coef2curve(x_pos, self.grid, self.coef, self.k)
+        if self.mode == None:
+            y_eval = coef2curve(x_eval=x, grid=self.grid, coef=self.coef, k=self.k)
+        else:
+            y_eval = coef2curve_monotonic(x_eval=x, grid=self.grid, coef=self.coef, k=self.k, mode=self.mode)
+        
         num_interval = self.grid.shape[1] - 1 - 2*self.k
         
         def get_grid(num_interval):
@@ -209,7 +233,11 @@ class KANLayer(nn.Module):
         if mode == 'grid':
             sample_grid = get_grid(2*num_interval)
             x_pos = sample_grid.permute(1,0)
-            y_eval = coef2curve(x_pos, self.grid, self.coef, self.k)
+            #y_eval = coef2curve(x_pos, self.grid, self.coef, self.k)
+            if self.mode == None:
+                y_eval = coef2curve(x_eval=x, grid=self.grid, coef=self.coef, k=self.k)
+            else:
+                y_eval = coef2curve_monotonic(x_eval=x, grid=self.grid, coef=self.coef, k=self.k, mode=self.mode)
         
         self.grid.data = extend_grid(grid, k_extend=self.k)
         #print('x_pos 2', x_pos.shape)
@@ -247,6 +275,10 @@ class KANLayer(nn.Module):
         # shrink grid
         x_pos = torch.sort(x, dim=0)[0]
         y_eval = coef2curve(x_pos, parent.grid, parent.coef, parent.k)
+        if self.mode == None:
+            y_eval = coef2curve(x_pos, parent.grid, parent.coef, parent.k)
+        else:
+            y_eval = coef2curve_monotonic(x_pos, parent.grid, parent.coef, parent.k, mode=self.mode)
         num_interval = self.grid.shape[1] - 1 - 2*self.k
         
         
@@ -285,7 +317,11 @@ class KANLayer(nn.Module):
         if mode == 'grid':
             sample_grid = get_grid(2*num_interval)
             x_pos = sample_grid.permute(1,0)
-            y_eval = coef2curve(x_pos, parent.grid, parent.coef, parent.k)
+            #y_eval = coef2curve(x_pos, parent.grid, parent.coef, parent.k)
+            if self.mode == None:
+                y_eval = coef2curve(x_pos, parent.grid, parent.coef, parent.k)
+            else:
+                y_eval = coef2curve_monotonic(x_pos, parent.grid, parent.coef, parent.k, mode=self.mode)
         
         grid = extend_grid(grid, k_extend=self.k)
         self.grid.data = grid
