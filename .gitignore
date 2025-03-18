@@ -13,3 +13,6 @@ figures
 molecule
 applications
 experiments
+tutorials/Experiments/init_random/model/
+tutorials/Experiments/moons/mlruns/
+tutorials/Experiments/moons/model/
