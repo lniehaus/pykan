@@ -6,14 +6,14 @@ export device_index=0
 export seed=0
 # Model
 export hidden_width=3
-export hidden_depth=1
-export steps=3
+export hidden_depth=5
+export steps=10
 export grid=5
 export k=3
 export mode='default'
 export base_fun='zero'
 export spline_noise_scale=0.3
-export native_noise_scale=false
+export init_mode='default'
 # Trainable
 export sp_trainable=false
 export sb_trainable=false
@@ -23,8 +23,8 @@ export update_grid=false
 export dataset='random'
 export moon_noise_level=0.5
 export random_distribution='uniform'
-export random_input_dim=2
-export random_output_dim=1
+export random_input_dim=3
+export random_output_dim=3
 export random_uniform_range_min=-1
 export random_uniform_range_max=1
 export random_normal_mean=0
@@ -33,6 +33,7 @@ export random_normal_std=1
 export symbolic_regression=true
 export plot_initialized_model=true
 export plot_trained_model=true
+export save_video=false
 
 
 echo "EXPERIMENT_NAME: $experiment_name"
@@ -49,7 +50,7 @@ python src/trainer.py \
     --mode $mode \
     --base_fun $base_fun \
     --spline_noise_scale $spline_noise_scale \
-    --native_noise_scale $native_noise_scale \
+    --init_mode $init_mode \
     --sp_trainable $sp_trainable \
     --sb_trainable $sb_trainable \
     --affine_trainable $affine_trainable \
@@ -65,4 +66,5 @@ python src/trainer.py \
     --random_normal_std $random_normal_std \
     --symbolic_regression $symbolic_regression \
     --plot_initialized_model $plot_initialized_model \
-    --plot_trained_model $plot_trained_model
+    --plot_trained_model $plot_trained_model \
+    --save_video $save_video

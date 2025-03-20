@@ -6,7 +6,7 @@ import numpy as np
 import mlflow
 import mlflow.pytorch
 from datasets import moon_data, random_data
-from plotter import plot_train_data, plot_predictions
+from plotter import plot_train_data, plot_predictions, plot_violins, plot_violins_extended, plot_mean_std
 from video import create_video
 
 
@@ -61,7 +61,8 @@ def parse_args():
     parser.add_argument('--mode', type=str, choices=['default', 'abs', 'sigmoid', 'relu'], default='default', help='Activation mode')
     parser.add_argument('--base_fun', type=str, choices=['silu', 'identity', 'zero'], default='silu', help='base function')
     parser.add_argument('--spline_noise_scale', type=float, default=0.3, help='Adjust the spline noise at initialization')
-    parser.add_argument('--native_noise_scale', type=bool, default=False, help='directly use the native spline_noise_scale value as std')
+    parser.add_argument('--init_mode', type=str, choices=['default', 'native_noise', 'width_in', 'width_out', 'xavier_in', 'xavier_out', 'xavier_torch'], default='default', help='Initialization Mode')
+    #parser.add_argument('--native_noise_scale', type=bool, default=False, help='directly use the native spline_noise_scale value as std')
 
     # Trainable Features
     parser.add_argument('--sp_trainable', type=str2bool, default=False, help='Whether to make the spline parameters trainable')
@@ -84,6 +85,7 @@ def parse_args():
     parser.add_argument('--symbolic_regression', type=str2bool, default=False, help='Activates the Symbolic Regression. Takes long for big models')
     parser.add_argument('--plot_initialized_model', type=str2bool, default=False, help='Plot the initialized model (pykan native). Takes long and a lot of ram for big models')
     parser.add_argument('--plot_trained_model', type=str2bool, default=False, help='Plot the trained model (pykan native). Takes long and a lot of ram for big models')
+    parser.add_argument('--save_video', type=str2bool, default=False, help='Save a video of the Splines (pykan native). Slows training')
 
     args = parser.parse_args()
     return args
@@ -92,6 +94,7 @@ def main():
     args = parse_args()
     print(args.experiment_name)
     device = torch.device(f'cuda:{args.device_index}' if torch.cuda.is_available() else 'cpu')
+    print("device:", device)
 
     # Start Experiment and run
     mlflow.set_experiment(args.experiment_name)
@@ -110,7 +113,7 @@ def main():
         #dataset = random_data()
         dataset =  random_data(
             args.random_distribution, 
-            n_samples=1000, 
+            n_samples=10_000, 
             n_features=args.random_input_dim, 
             n_labels=args.random_output_dim, 
             loc=args.random_normal_mean,
@@ -124,6 +127,7 @@ def main():
     elif args.dataset == "moon":
         dataset = moon_data(
             data_noise_level=args.moon_noise_level, 
+            n_samples=10_000, 
             seed=args.seed, 
             device=device
             )
@@ -146,12 +150,23 @@ def main():
             base_fun=args.base_fun,
             noise_scale=args.spline_noise_scale,
             mode=args.mode,
-            native_noise_scale=args.native_noise_scale,
+            init_mode=args.init_mode,
             ckpt_path=ckpt_folder
             )
 
-    if args.plot_initialized_model:
-        model(dataset['train_input'])
+
+    model(dataset['train_input'])
+    fig = plot_violins(model=model, sample_size=10_000)
+    mlflow.log_figure(fig, "kan-activations-violins-initialized.png")
+    fig = plot_violins_extended(model=model, dataset=dataset, sample_size=100)
+    mlflow.log_figure(fig, "kan-activations-violins-extended-initialized.png")
+    fig = plot_mean_std(model)
+    mlflow.log_figure(fig, "layer_mean_std-initialized.png")
+
+    #if args.plot_initialized_model:
+    #if args.hidden_width < 10 and args.hidden_depth < 10 and args.random_input_dim < 10 and args.random_output_dim < 10:
+    # Only plot small Networks
+    if not any(element > 10 for sublist in width for element in sublist):
         model.plot(folder=f"./figures/{args.experiment_name}/{run_id}_initialized")
         mlflow.log_figure(model.fig, "kan-splines-initialized.png")
 
@@ -179,7 +194,7 @@ def main():
                         metrics=(train_acc, test_acc), 
                         update_grid=args.update_grid,
                         img_folder=video_folder,
-                        save_fig=True,
+                        save_fig=args.save_video,
                         beta=10
                         )
     print(f"train_acc: {results['train_acc'][-1]:2f}, test_acc: {results['test_acc'][-1]:2f}")
@@ -191,20 +206,31 @@ def main():
 
     mlflow.pytorch.log_model(model, "model")
 
-    if args.plot_trained_model:
-        model(dataset['train_input'])
+
+    model(dataset['train_input'])
+    fig = plot_violins(model=model, sample_size=10_000)
+    mlflow.log_figure(fig, "kan-activations-violins-trained.png")
+    fig = plot_violins_extended(model=model, dataset=dataset, sample_size=100)
+    mlflow.log_figure(fig, "kan-activations-violins-extended-trained.png")
+    fig = plot_mean_std(model)
+    mlflow.log_figure(fig, "layer_mean_std-trained.png")
+
+    #if args.plot_trained_model:
+    #if args.hidden_width < 10 and args.hidden_depth < 10 and args.random_input_dim < 10 and args.random_output_dim < 10:
+    # Only plot small Networks
+    if not any(element > 10 for sublist in width for element in sublist):
         model.plot(folder=f"./figures/{args.experiment_name}/{run_id}_trained")
         mlflow.log_figure(model.fig, "kan-splines-trained.png")
-
     
     fig = plot_predictions(model, dataset)
     mlflow.log_figure(plt.gcf(), "test_input_predictions.png")
 
     # SAVE Video
-    print("Save Video")
-    video_name = "training"
-    video_file = create_video(video_folder, video_name)
-    mlflow.log_artifact(video_file)
+    if args.save_video:
+        print("Save Video")
+        video_name = "training"
+        video_file = create_video(video_folder, video_name)
+        mlflow.log_artifact(video_file)
 
     # Symbolic Refgression
     if args.symbolic_regression:

@@ -93,7 +93,7 @@ class MultKAN(nn.Module):
             the number of times rewind() has been called
         device : str
     '''
-    def __init__(self, width=None, grid=3, k=3, mult_arity = 2, noise_scale=0.3, scale_base_mu=0.0, scale_base_sigma=1.0, base_fun='silu', symbolic_enabled=True, affine_trainable=False, grid_eps=0.02, grid_range=[-1, 1], sp_trainable=True, sb_trainable=True, seed=1, save_act=True, sparse_init=False, auto_save=True, first_init=True, ckpt_path='./model', state_id=0, round=0, device='cpu', mode='default', native_noise_scale=False):
+    def __init__(self, width=None, grid=3, k=3, mult_arity = 2, noise_scale=0.3, scale_base_mu=0.0, scale_base_sigma=1.0, base_fun='silu', symbolic_enabled=True, affine_trainable=False, grid_eps=0.02, grid_range=[-1, 1], sp_trainable=True, sb_trainable=True, seed=1, save_act=True, sparse_init=False, auto_save=True, first_init=True, ckpt_path='./model', state_id=0, round=0, device='cpu', mode='default', init_mode='default'):
         '''
         initalize a KAN model
         
@@ -164,7 +164,7 @@ class MultKAN(nn.Module):
         self.act_fun = []
         self.depth = len(width) - 1
         self.mode = mode
-        self.native_noise_scale = native_noise_scale
+        self.init_mode = init_mode
         
         #print('haha1', width)
         for i in range(len(width)):
@@ -213,7 +213,7 @@ class MultKAN(nn.Module):
                 k_l = k
                     
             
-            sp_batch = KANLayer(in_dim=width_in[l], out_dim=width_out[l+1], num=grid_l, k=k_l, noise_scale=noise_scale, scale_base_mu=scale_base_mu, scale_base_sigma=scale_base_sigma, scale_sp=1., base_fun=base_fun, grid_eps=grid_eps, grid_range=grid_range, sp_trainable=sp_trainable, sb_trainable=sb_trainable, sparse_init=sparse_init, mode=self.mode, native_noise_scale=self.native_noise_scale)
+            sp_batch = KANLayer(in_dim=width_in[l], out_dim=width_out[l+1], num=grid_l, k=k_l, noise_scale=noise_scale, scale_base_mu=scale_base_mu, scale_base_sigma=scale_base_sigma, scale_sp=1., base_fun=base_fun, grid_eps=grid_eps, grid_range=grid_range, sp_trainable=sp_trainable, sb_trainable=sb_trainable, sparse_init=sparse_init, mode=self.mode, init_mode=self.init_mode)
             self.act_fun.append(sp_batch)
 
         self.node_bias = []
@@ -482,7 +482,10 @@ class MultKAN(nn.Module):
                      first_init=False,
                      state_id=self.state_id,
                      round=self.round,
-                     device=self.device)
+                     device=self.device,
+                     mode=self.mode, 
+                     init_mode=self.init_mode
+                     )
             
         model_new.initialize_from_another_model(self, self.cache_data)
         model_new.cache_data = self.cache_data
@@ -534,7 +537,9 @@ class MultKAN(nn.Module):
             auto_save = model.auto_save,
             ckpt_path = model.ckpt_path,
             round = model.round,
-            device = str(model.device)
+            device = str(model.device),
+            mode=model.mode, 
+            init_mode=model.init_mode
         )
         
         if dic["device"].isdigit():
@@ -591,7 +596,10 @@ class MultKAN(nn.Module):
                      first_init=False,
                      ckpt_path=config['ckpt_path'],
                      round = config['round']+1,
-                     device = config['device'])
+                     device = config['device'],
+                     mode=config['mode'],
+                     init_mode=config['init_mode']
+                     )
 
         model_load.load_state_dict(state)
         model_load.cache_data = torch.load(f'{path}_cache_data')
@@ -2382,7 +2390,7 @@ class MultKAN(nn.Module):
 
         # add kanlayer, set mask to zero
         dim_out = self.width_in[-1]
-        layer = KANLayer(dim_out, dim_out, num=self.grid, k=self.k, mode=self.mode, native_noise_scale=self.native_noise_scale)
+        layer = KANLayer(dim_out, dim_out, num=self.grid, k=self.k, mode=self.mode, init_mode=self.init_mode)
         layer.mask *= 0.
         self.act_fun.append(layer)
 
@@ -2453,7 +2461,7 @@ class MultKAN(nn.Module):
                                 new.affine.data[j][i] = old.affine.data[j-n_added_nodes][i]
 
                     self.symbolic_fun[l] = new
-                    self.act_fun[l] = KANLayer(in_dim, out_dim + n_added_nodes, num=self.grid, k=self.k, mode=self.mode, native_noise_scale=self.native_noise_scale)
+                    self.act_fun[l] = KANLayer(in_dim, out_dim + n_added_nodes, num=self.grid, k=self.k, mode=self.mode, init_mode=self.init_mode)
                     self.act_fun[l].mask *= 0.
 
                     self.node_scale[l].data = torch.cat([torch.ones(n_added_nodes, device=self.device), self.node_scale[l].data])
@@ -2484,7 +2492,7 @@ class MultKAN(nn.Module):
                                 new.affine.data[j][i] = old.affine.data[j][i-n_added_nodes]
 
                     self.symbolic_fun[l] = new
-                    self.act_fun[l] = KANLayer(in_dim + n_added_nodes, out_dim, num=self.grid, k=self.k, mode=self.mode, native_noise_scale=self.native_noise_scale)
+                    self.act_fun[l] = KANLayer(in_dim + n_added_nodes, out_dim, num=self.grid, k=self.k, mode=self.mode, init_mode=self.init_mode)
                     self.act_fun[l].mask *= 0.
 
 
@@ -2515,7 +2523,7 @@ class MultKAN(nn.Module):
                                 new.affine.data[j][i] = old.affine.data[j][i]
 
                     self.symbolic_fun[l] = new
-                    self.act_fun[l] = KANLayer(in_dim, out_dim + n_added_subnodes, num=self.grid, k=self.k, mode=self.mode, native_noise_scale=self.native_noise_scale)
+                    self.act_fun[l] = KANLayer(in_dim, out_dim + n_added_subnodes, num=self.grid, k=self.k, mode=self.mode, init_mode=self.init_mode)
                     self.act_fun[l].mask *= 0.
 
                     self.node_scale[l].data = torch.cat([self.node_scale[l].data, torch.ones(n_added_nodes, device=self.device)])
@@ -2544,7 +2552,7 @@ class MultKAN(nn.Module):
                                 new.affine.data[j][i] = old.affine.data[j][i]
 
                     self.symbolic_fun[l] = new
-                    self.act_fun[l] = KANLayer(in_dim + n_added_nodes, out_dim, num=self.grid, k=self.k, mode=self.mode, native_noise_scale=self.native_noise_scale)
+                    self.act_fun[l] = KANLayer(in_dim + n_added_nodes, out_dim, num=self.grid, k=self.k, mode=self.mode, init_mode=self.init_mode)
                     self.act_fun[l].mask *= 0.
 
         _expand(layer_id-1, n_added_nodes, sum_bool, mult_arity, added_dim='out')

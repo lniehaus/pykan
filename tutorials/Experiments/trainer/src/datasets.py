@@ -2,10 +2,10 @@ import torch
 import numpy as np
 from sklearn.datasets import make_moons
 
-def moon_data(data_noise_level, seed=0, device="cpu"):
+def moon_data(data_noise_level, n_samples=1000,seed=0, device="cpu"):
     # Generate the original dataset
-    train_input, train_label = make_moons(n_samples=1000, shuffle=True, noise=data_noise_level, random_state=seed)
-    test_input, test_label = make_moons(n_samples=1000, shuffle=True, noise=data_noise_level, random_state=seed+1)
+    train_input, train_label = make_moons(n_samples=n_samples, shuffle=True, noise=data_noise_level, random_state=seed)
+    test_input, test_label = make_moons(n_samples=n_samples, shuffle=True, noise=data_noise_level, random_state=seed+1)
 
     # Convert to PyTorch tensors
     dtype = torch.get_default_dtype()

@@ -13,6 +13,6 @@ figures
 molecule
 applications
 experiments
-tutorials/Experiments/trainer/figures/
-tutorials/Experiments/trainer/mlruns/
-tutorials/Experiments/trainer/model/
+figures/
+mlruns/
+model/

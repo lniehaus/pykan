@@ -1,14 +1,17 @@
 import torch
 import numpy as np
+import pandas as pd
+import seaborn as sns
 import matplotlib.pyplot as plt
 
-def plot_train_data(dataset, title="Train Datase"):
+def plot_train_data(dataset, title="Train Dataset"):
     X = dataset['train_input']
     y = dataset['train_label']
     plt.scatter(X[:, 0].cpu().detach().numpy(), X[:, 1].cpu().detach().numpy(), c=y[:, 0].cpu().detach().numpy())
     plt.title(title)
     plt.xlabel('Feature 1')
     plt.ylabel('Feature 2')
+    plt.tight_layout()
     #mlflow.log_figure(plt.gcf(), "train_data.png")
     return plt.gcf()
 
@@ -28,5 +31,130 @@ def plot_predictions(model, dataset):
     plt.xlabel('Feature 1')
     plt.ylabel('Feature 2')
     plt.colorbar(label='Predicted Label')
+    plt.tight_layout()
     #mlflow.log_figure(plt.gcf(), "test_input_predictions.png")
+    return plt.gcf()
+
+def plot_mean_std(model):
+    act_means = []
+    act_stds = []
+    coef_means = []
+    coef_stds = []
+
+    for layer_index, (act_fun, preacts, postacts, postsplines) in enumerate(zip(model.act_fun, model.spline_preacts, model.spline_postacts, model.spline_postsplines)):
+        coef = act_fun.coef
+        with torch.no_grad():
+            act_means.append(postacts.mean().cpu().numpy())
+            act_stds.append(postacts.std().cpu().numpy())
+            coef_means.append(coef.mean().cpu().numpy())
+            coef_stds.append(coef.std().cpu().numpy())
+
+    fig, axs = plt.subplots(2,2,figsize=(12,6))
+    axs[0][0].plot(act_means, label=f"Act_means: {np.mean(act_means):2e}")
+    axs[0][0].set_title("Activity Means")
+    axs[0][0].set_xlabel("Layer Index")
+    axs[0][0].set_ylabel("Mean Value")
+    axs[0][0].legend()
+    axs[0][1].plot(act_stds, label=f"Act Stds: {np.mean(act_stds):2e}")
+    axs[0][1].set_title("Activity Standard Deviations")
+    axs[0][1].set_xlabel("Layer Index")
+    axs[0][1].set_ylabel("Standard Deviation")
+    axs[0][1].legend()
+
+    axs[1][0].plot(coef_means, label=f"Coef Means: {np.mean(coef_means):2e}")
+    axs[1][0].set_title("Coefficient Means")
+    axs[1][0].set_xlabel("Layer Index")
+    axs[1][0].set_ylabel("Mean Value")
+    axs[1][0].legend()
+    axs[1][1].plot(coef_stds, label=f"Coef Stds: {np.mean(coef_stds):2e}")
+    axs[1][1].set_title("Coefficient Standard Deviations")
+    axs[1][1].set_xlabel("Layer Index")
+    axs[1][1].set_ylabel("Standard Deviation")
+    axs[1][1].legend()
+
+    plt.tight_layout()
+    return fig
+
+def plot_violins(model, title, sample_size=100):
+    # Assuming model.act_fun and model.spline_preacts are defined
+    data = []
+    for layer_index, (act_fun, acts, preacts, postacts, postsplines) in enumerate(zip(model.act_fun, model.acts, model.spline_preacts, model.spline_postacts, model.spline_postsplines)):
+        acts_np = torch.flatten(postacts).cpu().numpy()
+        
+        # Sample a subset of activations if there are more than sample_size
+        if len(acts_np) > sample_size:
+            sampled_acts = np.random.choice(acts_np, sample_size, replace=False)
+        else:
+            sampled_acts = acts_np  # Use all if less than sample_size
+        
+        # Append layer index and sampled activations to the data list
+        data.extend([(layer_index, act) for act in sampled_acts])
+
+    # Convert the data into a DataFrame
+    df = pd.DataFrame(data, columns=['Layer', 'Activation'])
+
+    plt.figure(figsize=(12, 6))
+
+    # Create a violin plot
+    sns.catplot(data=df, x="Layer", y="Activation", kind="violin", height=6, aspect=1.5)
+
+    # Adding labels and title
+    plt.title(title)
+    plt.xlabel('Layer')
+    plt.ylabel('Activations')
+    plt.tight_layout()
+
+    # Show plot
+    #plt.show()
+    return plt.gcf()
+
+def plot_violins_extended(model, dataset, sample_size=100):
+    # Assuming model.act_fun and model.spline_preacts are defined
+    data = []
+
+    # Collect activations and labels
+    for layer_index, (act_fun, acts, preacts, postacts, postsplines) in enumerate(zip(model.act_fun, model.acts, model.spline_preacts, model.spline_postacts, model.spline_postsplines)):
+        acts_np = torch.flatten(postacts).cpu().numpy()
+        
+        # Sample a subset of activations if there are more than sample_size
+        if len(acts_np) > sample_size:
+            sampled_acts = np.random.choice(acts_np, sample_size, replace=False)
+        else:
+            sampled_acts = acts_np  # Use all if less than sample_size
+        
+        # Get corresponding labels for the sampled activations
+        labels = dataset['test_label'].cpu().numpy().flatten()
+        
+        # Sample corresponding labels
+        if len(labels) > sample_size:
+            sampled_labels = np.random.choice(labels, sample_size, replace=False)
+        else:
+            sampled_labels = labels  # Use all if less than sample_size
+        
+        # Append layer index, sampled activations, and labels to the data list
+        data.extend([(layer_index, act, label) for act, label in zip(sampled_acts, sampled_labels)])
+
+    # Convert the data into a DataFrame
+    df = pd.DataFrame(data, columns=['Layer', 'Activation', 'Label'])
+
+    # Define a color mapping
+    color_mapping = {0: 'red', 1: 'orange'}  # Assuming labels are 0 and 1
+
+    # Create a new column for colors based on the mapping
+    df['Color'] = df['Label'].map(color_mapping)
+
+    # Create a violin plot
+    g = sns.catplot(data=df, x="Layer", y="Activation", kind="violin", inner=None, height=6, aspect=1.5)
+
+    # Overlay a swarm plot with custom colors
+    sns.swarmplot(data=df, x="Layer", y="Activation", hue="Label", palette=color_mapping, size=3, ax=g.ax)
+
+    # Adding labels and title
+    plt.title('Activations (Subset) Colored by Label')
+    plt.xlabel('Layer')
+    plt.ylabel('Activations')
+    plt.tight_layout()
+
+    # Show plot
+    #plt.show()
     return plt.gcf()

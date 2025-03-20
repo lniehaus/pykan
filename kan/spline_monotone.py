@@ -75,7 +75,7 @@ def coef2curve_monotonic(x_eval, grid, coef, k, device="cpu", mode=None):
     #print("coef.shape", coef.shape)
     #print("coef", coef)
     
-    if mode == None:
+    if mode == "default":
         pass
     elif mode == "abs":
         coef = torch.abs(coef)

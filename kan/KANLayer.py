@@ -43,7 +43,7 @@ class KANLayer(nn.Module):
             device
     """
 
-    def __init__(self, in_dim=3, out_dim=2, num=5, k=3, noise_scale=0.5, scale_base_mu=0.0, scale_base_sigma=1.0, scale_sp=1.0, base_fun=torch.nn.SiLU(), grid_eps=0.02, grid_range=[-1, 1], sp_trainable=True, sb_trainable=True, save_plot_data = True, device='cpu', sparse_init=False, mode='default', native_noise_scale=False):
+    def __init__(self, in_dim=3, out_dim=2, num=5, k=3, noise_scale=0.5, scale_base_mu=0.0, scale_base_sigma=1.0, scale_sp=1.0, base_fun=torch.nn.SiLU(), grid_eps=0.02, grid_range=[-1, 1], sp_trainable=True, sb_trainable=True, save_plot_data = True, device='cpu', sparse_init=False, mode='default', init_mode="default"):
         ''''
         initialize a KANLayer
         
@@ -102,10 +102,25 @@ class KANLayer(nn.Module):
         grid = extend_grid(grid, k_extend=k)
         self.grid = torch.nn.Parameter(grid).requires_grad_(False)
 
-        if native_noise_scale:        
-            noises = (torch.rand(self.num+1, self.in_dim, self.out_dim) - 1/2) * noise_scale #/ num
-        else:
+        # if native_noise_scale:        
+        #     noises = (torch.rand(self.num+1, self.in_dim, self.out_dim) - 1/2) * noise_scale #/ num
+        # else:
+        #     noises = (torch.rand(self.num+1, self.in_dim, self.out_dim) - 1/2) * noise_scale / num
+
+        if init_mode == 'default':
             noises = (torch.rand(self.num+1, self.in_dim, self.out_dim) - 1/2) * noise_scale / num
+        elif init_mode == 'native_noise':
+            noises = (torch.rand(self.num+1, self.in_dim, self.out_dim) - 1/2) * 2.0 * noise_scale
+        elif init_mode == 'width_in':
+            noises = (torch.rand(self.num+1, self.in_dim, self.out_dim) - 1/2) * 2.0 * 1.0/in_dim
+        elif init_mode == 'width_out':
+            noises = (torch.rand(self.num+1, self.in_dim, self.out_dim) - 1/2) * 2.0 * 1.0/out_dim
+        elif init_mode == 'xavier_in':
+            noises = (torch.rand(self.num+1, self.in_dim, self.out_dim) - 1/2) * 2.0 * 1.0 / np.sqrt(in_dim)
+        elif init_mode == 'xavier_out':
+            noises = (torch.rand(self.num+1, self.in_dim, self.out_dim) - 1/2) * 2.0 * 1.0 / np.sqrt(out_dim)
+        elif init_mode == 'xavier_torch':
+            noises = (torch.rand(self.num+1, self.in_dim, self.out_dim) - 1/2) * 2.0 * 1.0 * np.sqrt(6.0 / in_dim + out_dim)
 
         self.coef = torch.nn.Parameter(curve2coef(self.grid[:,k:-k].permute(1,0), noises, self.grid, k))
         
