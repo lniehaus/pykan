@@ -135,9 +135,6 @@ def main():
         output_dim = 1
 
 
-    fig = plot_train_data(dataset)
-    mlflow.log_figure(fig, "train_data.png")
-
     video_folder=f"./figures/{args.experiment_name}/{run_id}/video"
     ckpt_folder=f"./model/{args.experiment_name}/{run_id}"
 
@@ -156,11 +153,29 @@ def main():
 
 
     model(dataset['train_input'])
-    fig = plot_violins(model=model, sample_size=10_000)
+
+    # Update plot_violins call
+    fig = plot_violins(
+        model=model, 
+        sample_size=10_000, 
+        title=f"Train Accuracy: Width: {args.hidden_width}, Init Mode: {args.init_mode}"
+    )
     mlflow.log_figure(fig, "kan-activations-violins-initialized.png")
-    fig = plot_violins_extended(model=model, dataset=dataset, sample_size=100)
+
+    # Update plot_violins_extended call
+    fig = plot_violins_extended(
+        model=model, 
+        dataset=dataset, 
+        sample_size=100, 
+        title=f"Train Accuracy: Width: {args.hidden_width}, Init Mode: {args.init_mode}"
+    )
     mlflow.log_figure(fig, "kan-activations-violins-extended-initialized.png")
-    fig = plot_mean_std(model)
+
+    # Update plot_mean_std call
+    fig = plot_mean_std(
+        model, 
+        title=f"Train Accuracy: Width: {args.hidden_width}, Init Mode: {args.init_mode}"
+    )
     mlflow.log_figure(fig, "layer_mean_std-initialized.png")
 
     #if args.plot_initialized_model:
@@ -185,8 +200,6 @@ def main():
     spline_noise_scale_class = indices[0] if indices.size > 0 else -1
     mlflow.log_param("spline_noise_scale_class", spline_noise_scale_class)
 
-
-
     #results = model.fit(dataset, opt="LBFGS", steps=steps, metrics=(train_acc, test_acc, coef_mean, coef_std), update_grid=update_grid)
     results = model.fit(dataset, 
                         opt="LBFGS", 
@@ -208,12 +221,31 @@ def main():
 
 
     model(dataset['train_input'])
-    fig = plot_violins(model=model, sample_size=10_000)
+    # Update plot_violins call
+    # Update plot_violins call
+    fig = plot_violins(
+        model=model, 
+        sample_size=10_000, 
+        title=f"Train Accuracy: {max(results['train_acc']):.2f}, Width: {args.hidden_width}, Init Mode: {args.init_mode}"
+    )
     mlflow.log_figure(fig, "kan-activations-violins-trained.png")
-    fig = plot_violins_extended(model=model, dataset=dataset, sample_size=100)
+
+    # Update plot_violins_extended call
+    fig = plot_violins_extended(
+        model=model, 
+        dataset=dataset, 
+        sample_size=100, 
+        title=f"Train Accuracy: {max(results['train_acc']):.2f}, Width: {args.hidden_width}, Init Mode: {args.init_mode}"
+    )
     mlflow.log_figure(fig, "kan-activations-violins-extended-trained.png")
-    fig = plot_mean_std(model)
+
+    # Update plot_mean_std call
+    fig = plot_mean_std(
+        model, 
+        title=f"Train Accuracy: {max(results['train_acc']):.2f}, Width: {args.hidden_width}, Init Mode: {args.init_mode}"
+    )
     mlflow.log_figure(fig, "layer_mean_std-trained.png")
+
 
     #if args.plot_trained_model:
     #if args.hidden_width < 10 and args.hidden_depth < 10 and args.random_input_dim < 10 and args.random_output_dim < 10:
@@ -222,8 +254,19 @@ def main():
         model.plot(folder=f"./figures/{args.experiment_name}/{run_id}_trained")
         mlflow.log_figure(model.fig, "kan-splines-trained.png")
     
-    fig = plot_predictions(model, dataset)
-    mlflow.log_figure(plt.gcf(), "test_input_predictions.png")
+    fig = plot_predictions(
+        model=model, 
+        dataset=dataset, 
+        title=f"Trained Model - Train Accuracy: {max(results['train_acc']):.2f}, Width: {args.hidden_width}, Init Mode: {args.init_mode}"
+    )
+    mlflow.log_figure(fig, "test_input_predictions.png")
+
+    # For trained plots
+    fig = plot_train_data(
+        dataset, 
+        title=f"Trained Model - Train Accuracy: {max(results['train_acc']):.2f}, Width: {args.hidden_width}, Init Mode: {args.init_mode}"
+    )
+    mlflow.log_figure(fig, "train_data_trained.png")
 
     # SAVE Video
     if args.save_video:

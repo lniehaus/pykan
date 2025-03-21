@@ -1,13 +1,13 @@
 #!/bin/bash
 
 # Execution
-export JOB_NUM=4
+export JOB_NUM=2
 # Utility
-export experiment_name="width_17"
-export device_index=0
+export experiment_name="depth_dataset_init_01"
+export device_index=1
 export seed=0
 # Model
-export hidden_width=3
+export hidden_width=5
 export hidden_depth=5
 export steps=100
 export grid=5
@@ -42,19 +42,19 @@ echo "EXPERIMENT_NAME: $experiment_name"
 
 
 #widths=(10 20 30 40 50 60 70 80 90 100)
-widths=(100 90 80 70 60 50 40 30 20 10)
+depths=(100 90 80 70 60 50 40 30 20 10)
 #init_modes=('default' 'native_noise' 'width_in' 'width_out' 'xavier_in' 'xavier_out' 'xavier_torch')
-init_modes=('default' 'native_noise' 'width_in' 'xavier_in', 'xavier_torch')
-datasets=('random', 'moon')
+init_modes=('default' 'native_noise' 'width_in' 'xavier_in' 'xavier_torch')
+datasets=('random' 'moon')
 
 index=0
 for dataset in "${datasets[@]}"; do
-    for hidden_width in "${widths[@]}"; do
+    for hidden_depth in "${depths[@]}"; do
         for init_mode in "${init_modes[@]}"; do
-            mod_index=$((index % 2))
+            toggle_devive_index=$((index % 2))
             python src/trainer.py \
                 --experiment_name $experiment_name \
-                --device_index $mod_index \
+                --device_index $device_index \
                 --seed $seed \
                 --hidden_width $hidden_width \
                 --hidden_depth $hidden_depth \

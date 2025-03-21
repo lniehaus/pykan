@@ -102,11 +102,7 @@ class KANLayer(nn.Module):
         grid = extend_grid(grid, k_extend=k)
         self.grid = torch.nn.Parameter(grid).requires_grad_(False)
 
-        # if native_noise_scale:        
-        #     noises = (torch.rand(self.num+1, self.in_dim, self.out_dim) - 1/2) * noise_scale #/ num
-        # else:
-        #     noises = (torch.rand(self.num+1, self.in_dim, self.out_dim) - 1/2) * noise_scale / num
-
+        # CHANGED
         if init_mode == 'default':
             noises = (torch.rand(self.num+1, self.in_dim, self.out_dim) - 1/2) * noise_scale / num
         elif init_mode == 'native_noise':

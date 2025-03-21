@@ -4,7 +4,7 @@ import pandas as pd
 import seaborn as sns
 import matplotlib.pyplot as plt
 
-def plot_train_data(dataset, title="Train Dataset"):
+def plot_train_data(dataset, title):
     X = dataset['train_input']
     y = dataset['train_label']
     plt.scatter(X[:, 0].cpu().detach().numpy(), X[:, 1].cpu().detach().numpy(), c=y[:, 0].cpu().detach().numpy())
@@ -15,19 +15,20 @@ def plot_train_data(dataset, title="Train Dataset"):
     #mlflow.log_figure(plt.gcf(), "train_data.png")
     return plt.gcf()
 
-def plot_predictions(model, dataset):
+def plot_predictions(model, dataset, title):
     print("Plot Predictions")
     # Make predictions on the test input
     with torch.no_grad():  # Disable gradient calculation for inference
         predictions = model(dataset['test_input'])  # Get model predictions
         predicted_labels = torch.round(predictions[:, 0]).cpu().detach().numpy()  # Round predictions to get class labels
+        print(predicted_labels)
 
     # Create a scatter plot of the test input colored by the predicted labels
     plt.figure(figsize=(8, 6))
     plt.scatter(dataset['test_input'][:, 0].cpu().detach().numpy(), 
                 dataset['test_input'][:, 1].cpu().detach().numpy(), 
                 c=predicted_labels, cmap='coolwarm', edgecolor='k', s=20)
-    plt.title('Test Input Colored by Model Predictions')
+    plt.title(title)
     plt.xlabel('Feature 1')
     plt.ylabel('Feature 2')
     plt.colorbar(label='Predicted Label')
@@ -35,7 +36,7 @@ def plot_predictions(model, dataset):
     #mlflow.log_figure(plt.gcf(), "test_input_predictions.png")
     return plt.gcf()
 
-def plot_mean_std(model):
+def plot_mean_std(model, title):
     act_means = []
     act_stds = []
     coef_means = []
@@ -51,23 +52,23 @@ def plot_mean_std(model):
 
     fig, axs = plt.subplots(2,2,figsize=(12,6))
     axs[0][0].plot(act_means, label=f"Act_means: {np.mean(act_means):2e}")
-    axs[0][0].set_title("Activity Means")
+    axs[0][0].set_title(title)
     axs[0][0].set_xlabel("Layer Index")
     axs[0][0].set_ylabel("Mean Value")
     axs[0][0].legend()
     axs[0][1].plot(act_stds, label=f"Act Stds: {np.mean(act_stds):2e}")
-    axs[0][1].set_title("Activity Standard Deviations")
+    axs[0][1].set_title(title)
     axs[0][1].set_xlabel("Layer Index")
     axs[0][1].set_ylabel("Standard Deviation")
     axs[0][1].legend()
 
     axs[1][0].plot(coef_means, label=f"Coef Means: {np.mean(coef_means):2e}")
-    axs[1][0].set_title("Coefficient Means")
+    axs[1][0].set_title(title)
     axs[1][0].set_xlabel("Layer Index")
     axs[1][0].set_ylabel("Mean Value")
     axs[1][0].legend()
     axs[1][1].plot(coef_stds, label=f"Coef Stds: {np.mean(coef_stds):2e}")
-    axs[1][1].set_title("Coefficient Standard Deviations")
+    axs[1][1].set_title(title)
     axs[1][1].set_xlabel("Layer Index")
     axs[1][1].set_ylabel("Standard Deviation")
     axs[1][1].legend()
@@ -108,7 +109,7 @@ def plot_violins(model, title, sample_size=100):
     #plt.show()
     return plt.gcf()
 
-def plot_violins_extended(model, dataset, sample_size=100):
+def plot_violins_extended(model, dataset, title, sample_size=100):
     # Assuming model.act_fun and model.spline_preacts are defined
     data = []
 
@@ -150,7 +151,7 @@ def plot_violins_extended(model, dataset, sample_size=100):
     sns.swarmplot(data=df, x="Layer", y="Activation", hue="Label", palette=color_mapping, size=3, ax=g.ax)
 
     # Adding labels and title
-    plt.title('Activations (Subset) Colored by Label')
+    plt.title(title)
     plt.xlabel('Layer')
     plt.ylabel('Activations')
     plt.tight_layout()
