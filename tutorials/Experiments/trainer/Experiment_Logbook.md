@@ -97,3 +97,53 @@ default: 50% and width_in: 50% also show similar activation behaviour between ea
 Their means are roughly at the same position for each layer. all layers at 0.0, except for the last layer, which has a mean of ~+0.005.
 Their variance distribution seems slightly different. default seems to have a larger kurtosis than width_in.
 
+# Results of width_dataset_init_04
+This experiment compares the random and moon datasets with differing width sizes.
+xavier_torch shows strange behaviour.
+
+## xavier_torch observations
+For the moon dataset it reaches a train accuracy between 69% (w:10) to 99% (w100).
+However, the test accuracy on moon is between 40% (w:50) to 49% (w:60, w:100).
+Since moon contains actual trainable information we know, that xavier_torch results in strong overfitting.
+For the random dataset on the other hand, the train accuracy is between 16% (w:100) and 29% (w:10).
+The test accuracy is between 13% (w:100) and 26% (w:10)
+- Why is the test accuracy for random not around 50%?
+- A test accuracy of (100%-13%=87%) on binary random data is crazy good
+- There seems to be a bug regarding the generation of labels with a dynamic size
+future
+- moon dataset goes currently from -3 to +3, which is outside of the defined grid (-1,+1)
+- test this with a normalized version of moon (z-rescaling, or min-max-rescaling).
+
+## xavier_in
+
+## width_in
+
+## native_noise 0.3
+
+## default
+
+# Results of depth_dataset_init_01
+Training depth takes much longer than training width.
+
+
+# Sources (need to read)
+- Kolmogorov-Arnold Networks with Trainable
+Activation Functions for Data Regression and
+Classification
+file:///home/luniehaus/Downloads/1571098990.pdf
+
+- A Benchmarking Study of Kolmogorov-Arnold
+Networks on Tabular Data
+https://arxiv.org/pdf/2406.14529
+
+- Kolmogorov-Arnold Networks: a Critique
+https://medium.com/@rubenszimbres/kolmogorov-arnold-networks-a-critique-2b37fea2112e
+
+- Reddit Entry about KANs
+https://www.reddit.com/r/slatestarcodex/comments/1ciegqt/kolmogorovarnold_networks_paper/?rdt=61654
+
+- A Comprehensive Survey on Kolmogorov Arnold Networks (KAN)
+https://arxiv.org/html/2407.11075v5
+
+- ICLR OpenReview
+https://openreview.net/forum?id=Ozo7qJ5vZi

@@ -1,10 +1,10 @@
 #!/bin/bash
 
 # Execution
-export JOB_NUM=2
+export JOB_NUM=4
 # Utility
-export experiment_name="depth_dataset_init_01"
-export device_index=1
+export experiment_name="depth_dataset_init_02"
+export device_index=0
 export seed=0
 # Model
 export hidden_width=5
