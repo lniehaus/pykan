@@ -1,9 +1,9 @@
 #!/bin/bash
 
 # Execution
-export JOB_NUM=4
+export JOB_NUM=12
 # Utility
-export experiment_name="depth_dataset_init_02"
+export experiment_name="depth_dataset_init_04"
 export device_index=0
 export seed=0
 # Model
@@ -36,7 +36,7 @@ export symbolic_regression=false
 export plot_initialized_model=true
 export plot_trained_model=true
 export save_video=false
-
+export save_model=false # deep models scale horribly and are super big when saved (Why)
 
 echo "EXPERIMENT_NAME: $experiment_name"
 
@@ -54,7 +54,7 @@ for dataset in "${datasets[@]}"; do
             toggle_devive_index=$((index % 2))
             python src/trainer.py \
                 --experiment_name $experiment_name \
-                --device_index $device_index \
+                --device_index $toggle_devive_index \
                 --seed $seed \
                 --hidden_width $hidden_width \
                 --hidden_depth $hidden_depth \
@@ -82,6 +82,7 @@ for dataset in "${datasets[@]}"; do
                 --plot_initialized_model $plot_initialized_model \
                 --plot_trained_model $plot_trained_model \
                 --save_video $save_video \
+                --save_model $save_model \
                 &
             
             index=$((index + 1))  # Increment the index counter

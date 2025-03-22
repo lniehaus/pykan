@@ -86,6 +86,7 @@ def parse_args():
     parser.add_argument('--plot_initialized_model', type=str2bool, default=False, help='Plot the initialized model (pykan native). Takes long and a lot of ram for big models')
     parser.add_argument('--plot_trained_model', type=str2bool, default=False, help='Plot the trained model (pykan native). Takes long and a lot of ram for big models')
     parser.add_argument('--save_video', type=str2bool, default=False, help='Save a video of the Splines (pykan native). Slows training')
+    parser.add_argument('--save_model', type=str2bool, default=True, help='Save the model after training (can be very big if network is deep)')
 
     args = parser.parse_args()
     return args
@@ -154,6 +155,12 @@ def main():
 
     model(dataset['train_input'])
 
+    print(f"dti: {dataset['train_input'].shape} dtl: {dataset['test_label'].shape}")
+    ti = torch.round(model(dataset['train_input'])[:, 0])
+    tl = dataset['test_label'][:, 0]
+    print(f"ti: {ti.shape} tl: {tl.shape}")
+
+
     # Update plot_violins call
     fig = plot_violins(
         model=model, 
@@ -217,7 +224,8 @@ def main():
         for key in results.keys():
             mlflow.log_metric(key, results[key][i], step=i)
 
-    mlflow.pytorch.log_model(model, "model")
+    if args.save_model:
+        mlflow.pytorch.log_model(model, "model")
 
 
     model(dataset['train_input'])
