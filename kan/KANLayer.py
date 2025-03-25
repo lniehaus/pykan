@@ -116,12 +116,20 @@ class KANLayer(nn.Module):
         elif init_mode == 'xavier_out':
             noises = (torch.rand(self.num+1, self.in_dim, self.out_dim) - 1/2) * 2.0 * 1.0 / np.sqrt(out_dim)
         elif init_mode == 'xavier_torch':
-            noises = (torch.rand(self.num+1, self.in_dim, self.out_dim) - 1/2) * 2.0 * 1.0 * np.sqrt(6.0 / in_dim + out_dim)
-
+            #noises = (torch.rand(self.num+1, self.in_dim, self.out_dim) - 1/2) * 2.0 * 1.0 * np.sqrt(6.0 / in_dim + out_dim)
+            noises = (torch.rand(self.num+1, self.in_dim, self.out_dim) - 1/2) * 2.0 * 1.0 * np.sqrt(6.0) / np.sqrt(in_dim + out_dim)
         elif init_mode == 'width_in_num':
-            noises = (torch.rand(self.num+1, self.in_dim, self.out_dim) - 1/2) * 2.0 * 1.0 / (in_dim+num)
+            noises = (torch.rand(self.num+1, self.in_dim, self.out_dim) - 1/2) * 2.0 * 2.0 / (in_dim+num)
         elif init_mode == 'xavier_in_num':
-            noises = (torch.rand(self.num+1, self.in_dim, self.out_dim) - 1/2) * 2.0 * 1.0 / np.sqrt(in_dim+num)
+            noises = (torch.rand(self.num+1, self.in_dim, self.out_dim) - 1/2) * 2.0 * 2.0 / np.sqrt(in_dim+num)
+        elif init_mode == 'width_in_out':
+            noises = (torch.rand(self.num+1, self.in_dim, self.out_dim) - 1/2) * 2.0 * 2.0 / (in_dim+out_dim)
+        elif init_mode == 'xavier_in_out':
+            noises = (torch.rand(self.num+1, self.in_dim, self.out_dim) - 1/2) * 2.0 * 2.0 / np.sqrt(in_dim+out_dim)
+        elif init_mode == 'width_in_out_num':
+            noises = (torch.rand(self.num+1, self.in_dim, self.out_dim) - 1/2) * 2.0 * 3.0 / (in_dim+out_dim+num)
+        elif init_mode == 'xavier_in_out_num':
+            noises = (torch.rand(self.num+1, self.in_dim, self.out_dim) - 1/2) * 2.0 * 3.0 / np.sqrt(in_dim+out_dim+num)
 
         self.coef = torch.nn.Parameter(curve2coef(self.grid[:,k:-k].permute(1,0), noises, self.grid, k))
         

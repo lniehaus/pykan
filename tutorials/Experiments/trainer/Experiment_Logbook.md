@@ -155,3 +155,13 @@ xavier_in results in more activation functions used instead of only individual o
 http://127.0.0.1:5040/#/experiments/262300484374075982/runs/59111317b85e4580bdf530fc65956714/artifacts
 like compared to default:
 http://127.0.0.1:5040/#/experiments/262300484374075982/runs/340d06beea5948b6a3fc7a8aa05c6b2a/artifacts
+
+# Results of depth_dataset_init_extra_09
+When a layer l exceeds the grid (-1,+1) it will be a 0 in the input for layer l+1
+Should the first layer have a different (finer) knot vector than the later layers?
+
+default initialization can only train until layer 6.
+Training beyond that results in 0.5 accuracy.
+The activations in 10 layer moon show that the mean of the last layer gets up, setting all predictions to 1
+Default init: the 
+

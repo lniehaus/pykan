@@ -108,7 +108,7 @@ def plot_violins(model, title, mode="act", sample_size=100):
     plt.figure(figsize=(12, 6))
 
     # Create a violin plot
-    sns.violinplot(data=df, x="Layer", y="Activation")
+    sns.violinplot(data=df, x="Layer", y="Activation", inner="quart")
 
     # Adding labels and title
     plt.title(title)

@@ -1,9 +1,9 @@
 #!/bin/bash
 
 # Execution
-export JOB_NUM=4
+export JOB_NUM=12
 # Utility
-export experiment_name="depth_dataset_init_extra_09"
+export experiment_name="depth_dataset_init_19"
 export device_index=0
 export seed=0
 # Model
@@ -48,9 +48,10 @@ echo "EXPERIMENT_NAME: $experiment_name"
 
 #widths=(10 20 30 40 50 60 70 80 90 100)
 #depths=(100 90 80 70 60 50 40 30 20 10)
-depths=(10 9 8 7 6 5 4 3 2 1)
+#depths=(10 9 8 7 6 5 4 3 2 1)
+depths=(100 50 10 5 1)
 #init_modes=('default' 'native_noise' 'width_in' 'width_out' 'xavier_in' 'xavier_out' 'xavier_torch')
-init_modes=('default' 'native_noise' 'width_in' 'xavier_in' 'xavier_torch')
+init_modes=('default' 'native_noise' 'width_in' 'xavier_in' 'xavier_torch' 'width_in_num' 'xavier_in_num' 'width_in_out' 'xavier_in_out' 'width_in_out_num' 'xavier_in_out_num')
 datasets=('random' 'moon')
 
 index=0
@@ -93,7 +94,7 @@ for dataset in "${datasets[@]}"; do
             
             index=$((index + 1))  # Increment the index counter
 
-            sleep 1
+            sleep 10
 
             # Wait for 10 seconds after the first execution
             if $first_execution; then

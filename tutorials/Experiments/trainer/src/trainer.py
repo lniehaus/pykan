@@ -61,7 +61,7 @@ def parse_args():
     parser.add_argument('--mode', type=str, choices=['default', 'abs', 'sigmoid', 'relu'], default='default', help='Activation mode')
     parser.add_argument('--base_fun', type=str, choices=['silu', 'identity', 'zero'], default='silu', help='base function')
     parser.add_argument('--spline_noise_scale', type=float, default=0.3, help='Adjust the spline noise at initialization')
-    parser.add_argument('--init_mode', type=str, choices=['default', 'native_noise', 'width_in', 'width_out', 'xavier_in', 'xavier_out', 'xavier_torch'], default='default', help='Initialization Mode')
+    parser.add_argument('--init_mode', type=str, choices=['default', 'native_noise', 'width_in', 'width_out', 'xavier_in', 'xavier_out', 'xavier_torch', 'width_in_num', 'xavier_in_num', 'width_in_out', 'xavier_in_out', 'width_in_out_num', 'xavier_in_out_num'], default='default', help='Initialization Mode')
     #parser.add_argument('--native_noise_scale', type=bool, default=False, help='directly use the native spline_noise_scale value as std')
 
     # Trainable Features
@@ -155,10 +155,10 @@ def main():
 
     model(dataset['train_input'])
 
-    print(f"dti: {dataset['train_input'].shape} dtl: {dataset['test_label'].shape}")
-    ti = torch.round(model(dataset['train_input'])[:, 0])
-    tl = dataset['test_label'][:, 0]
-    print(f"ti: {ti.shape} tl: {tl.shape}")
+    # print(f"dti: {dataset['train_input'].shape} dtl: {dataset['test_label'].shape}")
+    # ti = torch.round(model(dataset['train_input'])[:, 0])
+    # tl = dataset['test_label'][:, 0]
+    # print(f"ti: {ti.shape} tl: {tl.shape}")
 
 
     # Update plot_violins call
@@ -216,6 +216,11 @@ def main():
     def test_acc():
         dtype = torch.get_default_dtype()
         return torch.mean((torch.round(model(dataset['test_input'])[:, 0]) == dataset['test_label'][:, 0]).type(dtype))
+    
+    # def gradient_mean():
+    #     dtype = torch.get_default_dtype()
+    #     return torch.mean((torch.round(model(dataset['test_input'])[:, 0]) == dataset['test_label'][:, 0]).type(dtype))
+    #     return torch.mean(model)
 
     noises = np.array([0.001, 0.01, 0.1, 1, 10, 100, 1000])
     indices = np.where(noises == args.spline_noise_scale)[0]

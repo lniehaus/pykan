@@ -13,7 +13,7 @@ export k=3
 export mode='default'
 export base_fun='zero'
 export spline_noise_scale=0.3
-export init_mode='default'
+export init_mode='xavier_in_out'
 # Trainable
 export sp_trainable=false
 export sb_trainable=false
