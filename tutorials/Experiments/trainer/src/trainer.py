@@ -165,9 +165,24 @@ def main():
     fig = plot_violins(
         model=model, 
         sample_size=10_000, 
-        title=f"Train Accuracy: Width: {args.hidden_width}, Init Mode: {args.init_mode}"
+        title=f"Train Accuracy: Width: {args.hidden_width}, Init Mode: {args.init_mode}",
+        mode='coef'
     )
-    mlflow.log_figure(fig, "kan-activations-violins-initialized.png")
+    mlflow.log_figure(fig, "kan-coef-violins-initialized.png")
+    fig = plot_violins(
+        model=model, 
+        sample_size=10_000, 
+        title=f"Train Accuracy: Width: {args.hidden_width}, Init Mode: {args.init_mode}",
+        mode='act'
+    )
+    mlflow.log_figure(fig, "kan-act-violins-initialized.png")
+    # fig = plot_violins(
+    #     model=model, 
+    #     sample_size=10_000, 
+    #     title=f"Train Accuracy: Width: {args.hidden_width}, Init Mode: {args.init_mode}",
+    #     mode='grad'
+    # )
+    # mlflow.log_figure(fig, "kan-grad-violins-initialized.png")
 
     # Update plot_violins_extended call
     fig = plot_violins_extended(
@@ -234,9 +249,24 @@ def main():
     fig = plot_violins(
         model=model, 
         sample_size=10_000, 
-        title=f"Train Accuracy: {max(results['train_acc']):.2f}, Width: {args.hidden_width}, Init Mode: {args.init_mode}"
+        title=f"Train Accuracy: {max(results['train_acc']):.2f}, Width: {args.hidden_width}, Init Mode: {args.init_mode}",
+        mode='coef'
     )
-    mlflow.log_figure(fig, "kan-activations-violins-trained.png")
+    mlflow.log_figure(fig, "kan-coef-violins-trained.png")
+    fig = plot_violins(
+        model=model, 
+        sample_size=10_000, 
+        title=f"Train Accuracy: {max(results['train_acc']):.2f}, Width: {args.hidden_width}, Init Mode: {args.init_mode}",
+        mode='act'
+    )
+    mlflow.log_figure(fig, "kan-act-violins-trained.png")
+    fig = plot_violins(
+        model=model, 
+        sample_size=10_000, 
+        title=f"Train Accuracy: {max(results['train_acc']):.2f}, Width: {args.hidden_width}, Init Mode: {args.init_mode}",
+        mode='grad'
+    )
+    mlflow.log_figure(fig, "kan-grad-violins-trained.png")
 
     # Update plot_violins_extended call
     fig = plot_violins_extended(

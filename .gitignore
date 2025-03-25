@@ -16,3 +16,4 @@ experiments
 figures/
 mlruns/
 model/
+data/

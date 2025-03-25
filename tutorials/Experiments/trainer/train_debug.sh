@@ -30,7 +30,7 @@ export random_uniform_range_max=1
 export random_normal_mean=0
 export random_normal_std=1
 # Eval & Plots
-export symbolic_regression=true
+export symbolic_regression=false
 export plot_initialized_model=true
 export plot_trained_model=true
 export save_video=false

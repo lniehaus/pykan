@@ -1,9 +1,9 @@
 #!/bin/bash
 
 # Execution
-export JOB_NUM=12
+export JOB_NUM=4
 # Utility
-export experiment_name="depth_dataset_init_04"
+export experiment_name="depth_dataset_init_extra_09"
 export device_index=0
 export seed=0
 # Model
@@ -16,7 +16,12 @@ export mode='default'
 export base_fun='zero'
 export spline_noise_scale=0.3
 export init_mode='default'
-# Trainable
+# Trainable On
+export sp_trainable=true
+export sb_trainable=true
+export affine_trainable=true
+export update_grid=true
+# Trainable Off
 export sp_trainable=false
 export sb_trainable=false
 export affine_trainable=false
@@ -42,7 +47,8 @@ echo "EXPERIMENT_NAME: $experiment_name"
 
 
 #widths=(10 20 30 40 50 60 70 80 90 100)
-depths=(100 90 80 70 60 50 40 30 20 10)
+#depths=(100 90 80 70 60 50 40 30 20 10)
+depths=(10 9 8 7 6 5 4 3 2 1)
 #init_modes=('default' 'native_noise' 'width_in' 'width_out' 'xavier_in' 'xavier_out' 'xavier_torch')
 init_modes=('default' 'native_noise' 'width_in' 'xavier_in' 'xavier_torch')
 datasets=('random' 'moon')
@@ -73,7 +79,7 @@ for dataset in "${datasets[@]}"; do
                 --moon_noise_level $moon_noise_level \
                 --random_distribution $random_distribution \
                 --random_input_dim $hidden_width \
-                --random_output_dim $hidden_width \
+                --random_output_dim $random_output_dim \
                 --random_uniform_range_min $random_uniform_range_min \
                 --random_uniform_range_max $random_uniform_range_max \
                 --random_normal_mean $random_normal_mean \

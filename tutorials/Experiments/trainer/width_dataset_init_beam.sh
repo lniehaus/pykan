@@ -1,9 +1,9 @@
 #!/bin/bash
 
 # Execution
-export JOB_NUM=2
+export JOB_NUM=4
 # Utility
-export experiment_name="width_dataset_init_04"
+export experiment_name="width_dataset_init_07"
 export device_index=0
 export seed=0
 # Model
@@ -16,7 +16,12 @@ export mode='default'
 export base_fun='zero'
 export spline_noise_scale=0.3
 export init_mode='default'
-# Trainable
+# Trainable On
+export sp_trainable=true
+export sb_trainable=true
+export affine_trainable=true
+export update_grid=true
+# Trainable Off
 export sp_trainable=false
 export sb_trainable=false
 export affine_trainable=false
@@ -54,7 +59,7 @@ for dataset in "${datasets[@]}"; do
             toggle_devive_index=$((index % 2))
             python src/trainer.py \
                 --experiment_name $experiment_name \
-                --device_index $device_index \
+                --device_index $toggle_devive_index \
                 --seed $seed \
                 --hidden_width $hidden_width \
                 --hidden_depth $hidden_depth \
@@ -73,7 +78,7 @@ for dataset in "${datasets[@]}"; do
                 --moon_noise_level $moon_noise_level \
                 --random_distribution $random_distribution \
                 --random_input_dim $hidden_width \
-                --random_output_dim $hidden_width \
+                --random_output_dim $random_output_dim \
                 --random_uniform_range_min $random_uniform_range_min \
                 --random_uniform_range_max $random_uniform_range_max \
                 --random_normal_mean $random_normal_mean \

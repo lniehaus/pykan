@@ -147,3 +147,11 @@ https://arxiv.org/html/2407.11075v5
 
 - ICLR OpenReview
 https://openreview.net/forum?id=Ozo7qJ5vZi
+
+
+# Results of depth_dataset_init_extra_06
+
+xavier_in results in more activation functions used instead of only individual ones:
+http://127.0.0.1:5040/#/experiments/262300484374075982/runs/59111317b85e4580bdf530fc65956714/artifacts
+like compared to default:
+http://127.0.0.1:5040/#/experiments/262300484374075982/runs/340d06beea5948b6a3fc7a8aa05c6b2a/artifacts

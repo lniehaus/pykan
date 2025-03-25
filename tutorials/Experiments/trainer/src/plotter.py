@@ -76,17 +76,28 @@ def plot_mean_std(model, title):
     plt.tight_layout()
     return fig
 
-def plot_violins(model, title, sample_size=100):
-    # Assuming model.act_fun and model.spline_preacts are defined
+def plot_violins(model, title, mode="act", sample_size=100):
     data = []
     for layer_index, (act_fun, acts, preacts, postacts, postsplines) in enumerate(zip(model.act_fun, model.acts, model.spline_preacts, model.spline_postacts, model.spline_postsplines)):
-        acts_np = torch.flatten(postacts).cpu().numpy()
         
+        coef = act_fun.coef
+
+        dist_np = None  # Changed from acts_np to dist_np
+        if mode == "coef":
+            dist_np = coef.cpu().detach().numpy()
+        elif mode == "act":
+            dist_np = postacts.cpu().detach().numpy()
+        elif mode == "grad":
+            dist_np = coef.grad.cpu().detach().numpy()
+
+        # Ensure dist_np is a 1D array
+        dist_np = dist_np.flatten()
+
         # Sample a subset of activations if there are more than sample_size
-        if len(acts_np) > sample_size:
-            sampled_acts = np.random.choice(acts_np, sample_size, replace=False)
+        if len(dist_np) > sample_size:
+            sampled_acts = np.random.choice(dist_np, sample_size, replace=False)
         else:
-            sampled_acts = acts_np  # Use all if less than sample_size
+            sampled_acts = dist_np  # Use all if less than sample_size
         
         # Append layer index and sampled activations to the data list
         data.extend([(layer_index, act) for act in sampled_acts])
@@ -97,16 +108,16 @@ def plot_violins(model, title, sample_size=100):
     plt.figure(figsize=(12, 6))
 
     # Create a violin plot
-    sns.catplot(data=df, x="Layer", y="Activation", kind="violin", height=6, aspect=1.5)
+    sns.violinplot(data=df, x="Layer", y="Activation")
 
     # Adding labels and title
     plt.title(title)
     plt.xlabel('Layer')
-    plt.ylabel('Activations')
+    plt.ylabel(f'{mode}')
     plt.tight_layout()
 
     # Show plot
-    #plt.show()
+    plt.show()
     return plt.gcf()
 
 def plot_violins_extended(model, dataset, title, sample_size=100):
