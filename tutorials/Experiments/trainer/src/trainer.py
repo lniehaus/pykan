@@ -235,7 +235,7 @@ def main():
                         update_grid=args.update_grid,
                         img_folder=video_folder,
                         save_fig=args.save_video,
-                        beta=10
+                        beta=100
                         )
     print(f"train_acc: {results['train_acc'][-1]:2f}, test_acc: {results['test_acc'][-1]:2f}")
 

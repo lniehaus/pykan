@@ -165,3 +165,125 @@ Training beyond that results in 0.5 accuracy.
 The activations in 10 layer moon show that the mean of the last layer gets up, setting all predictions to 1
 Default init: the 
 
+# Results of width_dataset_init_10
+
+Default initialization shows functions, that somewhat resemple basis functions.
+http://127.0.0.1:5030/#/experiments/901457137512269164/runs/2e3940d127df4f9fac74d17dc6e42ab9/artifacts
+Xavier_in_out initialization shows functions that are much more complex.
+http://127.0.0.1:5030/#/experiments/901457137512269164/runs/66475a93c1054a58a6ff97bbfab95c1e/artifacts
+
+Default worked good train acc 0.83 and xavier_in_out worked bad 0.57 (but shows an interesting pattern)
+
+Observation
+xavier_in_out shows complex b-splines. 
+The acts are big [-1.5, 1.5] at initialization already
+The coefs are crazy big [-4, 4] at initialization already
+
+xavier_in_out needs to create less variance in layer that are long 5, but thin 1.
+restructure formula
+
+Try:
+hold the amount of control points (grid_size) small (3), so it is more likely to build a basis function.
+Maybe by this it can create better symbolic regressions than default? 
+
+
+Initialize with normal distribution so it occurs less that the grid borders are reached (-1,1).
+
+
+# Results of width_dataset_init_14
+
+This run experiments with a low grid size of 1, hidden_depth = 5, hidden_width of [1,5] and datasets [random, moon].
+Looking at the kan_actiations-violins-extended-initialized.png we compare two different initialization modes.
+default and xavier_in_out.
+default: http://127.0.0.1:5030/#/experiments/878956549760550289/runs/e2a5c17b575345eba2e4d42dc104db3a/artifacts
+xavier_in_out: http://127.0.0.1:5030/#/experiments/878956549760550289/runs/e3921c123bba478caa8169a7ec145f97/artifacts
+
+the range of default is between 0.1 and -0.1.
+layer 0 has the biggest variance (also two splines instead of one, for the layer 1 ... 5)
+the variance at layer 1 is small but notable.
+layer 2 ... 5 are collapsed in variance [random garbage because train acc=0.52. the collapsed layers might explain this].
+
+the range of xavier_in_out between 0.5 and -1.0.
+the variances apear much more similar to each other.
+layer 0 ... 3 have notable variance.
+layer 4, 5 are collapsed [this goes against the random garbage theory, because here the train accuracy is 0.83].
+
+The information changes through the network go further with xavier_in_out than for default.
+interestingly, in the collapsed layers there is still positional change (does this step from random sampling?)
+
+To test this we need to test only sampling the first 100 always, but that might be hard because of the plotting function
+
+the plotting function for default does not show any activations. 
+turn up beta in code base [width_dataset_init_15 tests that].
+xavier_in_out shows splines.
+
+The results suggest that xavier_in_out works better than default.
+hidden_depth = 1, dataset=moon, grid_size=1.
+
+native_noise reports 0.5,0.5 in mlflow, but 0.58 train accuracy in the plots.
+[investigate why there is a difference in this case]
+
+for moon 
+these worked. train acc ~0.8:
+'width_in' 'xavier_in' 'xavier_torch' 'width_in_num' 'xavier_in_num' 'width_in_out' 'xavier_in_out' 'width_in_out_num' 
+these didnt work ~0.5:
+'default' 'native_noise' 
+
+Cool, all the methods work better than default and the mostly randomly chosen native_noise.
+Which method does it best?
+decide that by inspecting their performance when scaling up the model with and depth.
+
+in these results we also have the run where the hidden_width is 5 resulting in a 5,5 architecture.
+all models work here.
+indicating that increasing the complexity of the model makes the correct initialization less interesting/necessary. 
+
+for the random dataset:
+hidden architecture 5,1 [height, width]
+all are around 0.5 train_acc.
+
+hidden architecture 5,5 [height, width]
+show different results.
+default is around 0.5 train_acc.
+the others have varying results between 0.519 ... 0.581
+
+-----------------------
+Do a grid search and create matrix plots for train_acc on random.
+get the ranges from the current experiments 
+when does training end and overfitting start?
+-----------------------
+
+xavier_in_out has a train_acc of 0.58 on random
+http://127.0.0.1:5030/#/experiments/878956549760550289/runs/cb1635243d3044dba2aa1921911fcd2c/artifacts
+the coef trained show a decrease until the last layer.
+the activations appear to be crazy high -3, 3 also decreasing though the layers.
+at initialization the last layers 5 mean is much higher than the others.
+layer 3, 4 appear to be a bit more positive as well.
+at initialization the range is between 0.4, -0.3.
+after training the range is much bigger 3,-3. ten times fold.
+the gradoients are in range 0.0003, -0.0002.
+[i need a mean value label/title for the violin plots]
+the violins_extended plots show 4 seperate categories in the last layer.
+There apears to be generally more category building through the layers.
+from no category to many to 4 (4 individual activation functions?).
+why does this happen at initializaton?
+after training there might be categories in the last layer
+at initialization most of the activation functions look linear.
+Only in the earlier layers are somewhat more complex splines like x^2.
+after training the splines are more complex (grid=1) through all layers.
+the most complex apear to be in early middle layers 1,2,3
+
+default on random has 0.5 train_acc
+
+why are the activations of xavier_in_out so big and the splines show no sign of being at the border
+
+# Introduction
+
+grid -1, 1
+After training a KAN the coef of the b-splines, the mean value of the activations roughtly center around 0.
+This indicates, that the coefs closer to 0 are more important then the coefs at the border of the grid -1,1.
+
+
+
+# Ideas
+- Plot matrix that shows the var coef/activation with width and height on the axes
+
