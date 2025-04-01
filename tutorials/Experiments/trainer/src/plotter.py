@@ -4,11 +4,30 @@ import pandas as pd
 import seaborn as sns
 import matplotlib.pyplot as plt
 
+# def plot_train_data(dataset, title):
+#     X = dataset['train_input']
+#     y = dataset['train_label']
+#     #plt.scatter(X[:, 0].cpu().detach().numpy(), X[:, 1].cpu().detach().numpy(), c=y[:, 0].cpu().detach().numpy())
+#     plt.scatter(X[:,0].cpu().detach().numpy(), X[:,1].cpu().detach().numpy(), c=y[:].cpu().detach().numpy())
+#     plt.title(title)
+#     plt.xlabel('Feature 1')
+#     plt.ylabel('Feature 2')
+#     plt.tight_layout()
+#     #mlflow.log_figure(plt.gcf(), "train_data.png")
+#     return plt.gcf()
+
+
 def plot_train_data(dataset, title):
     X = dataset['train_input']
     y = dataset['train_label']
-    #plt.scatter(X[:, 0].cpu().detach().numpy(), X[:, 1].cpu().detach().numpy(), c=y[:, 0].cpu().detach().numpy())
-    plt.scatter(X[:,0].cpu().detach().numpy(), X[:,1].cpu().detach().numpy(), c=y[:].cpu().detach().numpy())
+    
+    # Convert one-hot encoded labels to class indices
+    y_class_indices = torch.argmax(y, dim=1)
+
+    # Plot the data
+    plt.scatter(X[:, 0].cpu().detach().numpy(), X[:, 1].cpu().detach().numpy(), 
+                c=y_class_indices.cpu().detach().numpy(), cmap='viridis', edgecolor='k')
+    
     plt.title(title)
     plt.xlabel('Feature 1')
     plt.ylabel('Feature 2')

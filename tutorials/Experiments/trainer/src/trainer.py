@@ -221,20 +221,34 @@ def main():
     #     dtype = torch.get_default_dtype()
     #     return torch.mean((torch.round(model(dataset['test_input'])[:, 0]) == dataset['test_label'][:, 0]).type(dtype))
     
-    # Classification Task
+    # # Classification Task
+    # def train_acc():
+    #     dtype = torch.get_default_dtype()
+    #     return torch.mean((torch.argmax(model(dataset['train_input']), dim=1) == dataset['train_label']).type(dtype))
+
+    # def test_acc():
+    #     dtype = torch.get_default_dtype()
+    #     return torch.mean((torch.argmax(model(dataset['test_input']), dim=1) == dataset['test_label']).type(dtype))
+
+
     def train_acc():
         dtype = torch.get_default_dtype()
-        return torch.mean((torch.argmax(model(dataset['train_input']), dim=1) == dataset['train_label']).type(dtype))
+        # Get the predicted class indices
+        predictions = torch.argmax(model(dataset['train_input']), dim=1)
+        # Get the true class indices from one-hot encoded labels
+        true_labels = torch.argmax(dataset['train_label'], dim=1)
+        # Calculate accuracy
+        return torch.mean((predictions == true_labels).type(dtype))
 
     def test_acc():
         dtype = torch.get_default_dtype()
-        return torch.mean((torch.argmax(model(dataset['test_input']), dim=1) == dataset['test_label']).type(dtype))
-
-
-    # def gradient_mean():
-    #     dtype = torch.get_default_dtype()
-    #     return torch.mean((torch.round(model(dataset['test_input'])[:, 0]) == dataset['test_label'][:, 0]).type(dtype))
-    #     return torch.mean(model)
+        # Get the predicted class indices
+        predictions = torch.argmax(model(dataset['test_input']), dim=1)
+        # Get the true class indices from one-hot encoded labels
+        true_labels = torch.argmax(dataset['test_label'], dim=1)
+        # Calculate accuracy
+        return torch.mean((predictions == true_labels).type(dtype))
+    
 
     noises = np.array([0.001, 0.01, 0.1, 1, 10, 100, 1000])
     indices = np.where(noises == args.spline_noise_scale)[0]

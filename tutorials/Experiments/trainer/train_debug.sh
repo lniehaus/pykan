@@ -5,7 +5,7 @@ export experiment_name="train-debug"
 export device_index=0
 export seed=0
 # Model
-export hidden_width=2
+export hidden_width=3
 export hidden_depth=5
 export steps=10
 export grid=1
