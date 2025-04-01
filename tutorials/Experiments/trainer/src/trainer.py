@@ -204,7 +204,7 @@ def main():
     #if args.hidden_width < 10 and args.hidden_depth < 10 and args.random_input_dim < 10 and args.random_output_dim < 10:
     # Only plot small Networks
     if not any(element > 10 for sublist in width for element in sublist):
-        model.plot(folder=f"./figures/{args.experiment_name}/{run_id}_initialized")
+        model.plot(folder=f"./figures/{args.experiment_name}/{run_id}_initialized", beta=100)
         mlflow.log_figure(model.fig, "kan-splines-initialized.png")
 
 
@@ -234,8 +234,7 @@ def main():
                         metrics=(train_acc, test_acc), 
                         update_grid=args.update_grid,
                         img_folder=video_folder,
-                        save_fig=args.save_video,
-                        beta=100
+                        save_fig=args.save_video
                         )
     print(f"train_acc: {results['train_acc'][-1]:2f}, test_acc: {results['test_acc'][-1]:2f}")
 
@@ -294,7 +293,7 @@ def main():
     #if args.hidden_width < 10 and args.hidden_depth < 10 and args.random_input_dim < 10 and args.random_output_dim < 10:
     # Only plot small Networks
     if not any(element > 10 for sublist in width for element in sublist):
-        model.plot(folder=f"./figures/{args.experiment_name}/{run_id}_trained")
+        model.plot(folder=f"./figures/{args.experiment_name}/{run_id}_trained", beta=100)
         mlflow.log_figure(model.fig, "kan-splines-trained.png")
     
     fig = plot_predictions(

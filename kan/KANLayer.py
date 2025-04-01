@@ -98,8 +98,18 @@ class KANLayer(nn.Module):
         self.k = k
         self.mode = mode
 
+        print("num", num)
+
         grid = torch.linspace(grid_range[0], grid_range[1], steps=num + 1)[None,:].expand(self.in_dim, num+1)
+        
+        print("grid.shape", grid.shape)
+        print("grid.shape data", grid)
+
         grid = extend_grid(grid, k_extend=k)
+
+        print("grid.shape extended", grid.shape)
+        print("grid.shape extended data", grid)
+
         self.grid = torch.nn.Parameter(grid).requires_grad_(False)
 
         # CHANGED
@@ -133,6 +143,10 @@ class KANLayer(nn.Module):
 
         self.coef = torch.nn.Parameter(curve2coef(self.grid[:,k:-k].permute(1,0), noises, self.grid, k))
         
+
+        print("noises.shape", noises.shape)
+        print("self.coef.shape", self.coef.shape)
+
         if sparse_init:
             self.mask = torch.nn.Parameter(sparse_mask(in_dim, out_dim)).requires_grad_(False)
         else:
