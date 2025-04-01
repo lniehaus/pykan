@@ -1,6 +1,8 @@
 import torch
 import numpy as np
 from sklearn.datasets import make_moons
+from torchvision import datasets
+from torchvision import transforms
 
 def moon_data(data_noise_level, n_samples=1000,seed=0, device="cpu"):
     # Generate the original dataset
@@ -43,4 +45,23 @@ def random_data(distribution, n_samples=1000, n_features=2, n_labels=1, loc=0.0,
     dataset['test_input'] = torch.from_numpy(test_input).type(dtype).to(device)
     dataset['train_label'] = torch.from_numpy(train_label).type(dtype).to(device)
     dataset['test_label'] = torch.from_numpy(test_label).type(dtype).to(device)
+    return dataset
+
+def mnist_data(device="cpu", seed=0):
+    # Define data transformation to normalize pixel values between 0 and 1
+    transform = transforms.Compose([transforms.ToTensor(),
+                                    transforms.Normalize((0.5,), (0.5,))])
+    
+    # Load MNIST dataset using torchvision
+    train_dataset = datasets.MNIST('./datasets/MNIST_DATA', download=True, train=True, transform=transform, seed=seed)
+    test_dataset = datasets.MNIST('./datasets/MNIST_DATA', download=True, train=False, transform=transform, seed=seed)
+
+    # Convert to PyTorch tensors and move data to the specified device
+    dtype = torch.get_default_dtype()
+    dataset = {}
+    dataset['train_input'] = train_dataset.data.type(dtype).to(device) / 255.0  # Normalize pixel values between 0 and 1
+    dataset['test_input'] = test_dataset.data.type(dtype).to(device) / 255.0   # Normalize pixel values between 0 and 1
+    dataset['train_label'] = train_dataset.targets.to(device)
+    dataset['test_label'] = test_dataset.targets.to(device)
+
     return dataset
