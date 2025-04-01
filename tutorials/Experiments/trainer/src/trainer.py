@@ -129,6 +129,8 @@ def main():
         dataset = moon_data(
             data_noise_level=args.moon_noise_level, 
             n_samples=10_000, 
+            #n_features=2, 
+            #n_labels=2, 
             seed=args.seed, 
             device=device
             )
@@ -209,14 +211,26 @@ def main():
 
 
     # Metrics
+
+    # Regression Task
+    # def train_acc():
+    #     dtype = torch.get_default_dtype()
+    #     return torch.mean((torch.round(model(dataset['train_input'])[:, 0]) == dataset['train_label'][:, 0]).type(dtype))
+
+    # def test_acc():
+    #     dtype = torch.get_default_dtype()
+    #     return torch.mean((torch.round(model(dataset['test_input'])[:, 0]) == dataset['test_label'][:, 0]).type(dtype))
+    
+    # Classification Task
     def train_acc():
         dtype = torch.get_default_dtype()
-        return torch.mean((torch.round(model(dataset['train_input'])[:, 0]) == dataset['train_label'][:, 0]).type(dtype))
+        return torch.mean((torch.argmax(model(dataset['train_input']), dim=1) == dataset['train_label']).type(dtype))
 
     def test_acc():
         dtype = torch.get_default_dtype()
-        return torch.mean((torch.round(model(dataset['test_input'])[:, 0]) == dataset['test_label'][:, 0]).type(dtype))
-    
+        return torch.mean((torch.argmax(model(dataset['test_input']), dim=1) == dataset['test_label']).type(dtype))
+
+
     # def gradient_mean():
     #     dtype = torch.get_default_dtype()
     #     return torch.mean((torch.round(model(dataset['test_input'])[:, 0]) == dataset['test_label'][:, 0]).type(dtype))

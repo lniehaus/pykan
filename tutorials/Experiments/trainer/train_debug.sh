@@ -20,7 +20,8 @@ export sb_trainable=false
 export affine_trainable=false
 export update_grid=false
 # Dataset
-export dataset='random'
+#export dataset='random'
+export dataset='moon'
 export moon_noise_level=0.5
 export random_distribution='uniform'
 export random_input_dim=3

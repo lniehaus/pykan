@@ -13,10 +13,21 @@ def moon_data(data_noise_level, n_samples=1000,seed=0, device="cpu"):
     dtype = torch.get_default_dtype()
     #device = 'cuda' if torch.cuda.is_available() else 'cpu'
     dataset = {}
+    # dataset['train_input'] = torch.from_numpy(train_input).type(dtype).to(device)
+    # dataset['test_input'] = torch.from_numpy(test_input).type(dtype).to(device)
+    # dataset['train_label'] = torch.from_numpy(train_label[:, None]).type(dtype).to(device)
+    # dataset['test_label'] = torch.from_numpy(test_label[:, None]).type(dtype).to(device)
+
+    # dataset['train_input'] = torch.from_numpy(train_input).type(dtype).to(device)
+    # dataset['test_input'] = torch.from_numpy(test_input).type(dtype).to(device)
+    # dataset['train_label'] = torch.from_numpy(train_label).type(torch.long).to(device)
+    # dataset['test_label'] = torch.from_numpy(test_label).type(torch.long).to(device)
+
     dataset['train_input'] = torch.from_numpy(train_input).type(dtype).to(device)
     dataset['test_input'] = torch.from_numpy(test_input).type(dtype).to(device)
-    dataset['train_label'] = torch.from_numpy(train_label[:, None]).type(dtype).to(device)
-    dataset['test_label'] = torch.from_numpy(test_label[:, None]).type(dtype).to(device)
+    dataset['train_label'] = torch.from_numpy(train_label).type(dtype).to(device)
+    dataset['test_label'] = torch.from_numpy(test_label).type(dtype).to(device)
+
     return dataset
 
 def random_data(distribution, n_samples=1000, n_features=2, n_labels=1, loc=0.0, normal_scale=1.0, range=(-1,1), seed=0, device="cpu"):
@@ -38,6 +49,11 @@ def random_data(distribution, n_samples=1000, n_features=2, n_labels=1, loc=0.0,
     train_label = np.random.randint(0, 2, size=(n_samples, n_labels))  # Random labels for training
     test_label = np.random.randint(0, 2, size=(n_samples, n_labels))   # Random labels for testing
 
+    print("train_input.shape", train_input.shape)
+    print("train_label.shape", train_label.shape)
+    print("test_input.shape", test_input.shape)
+    print("test_label.shape", test_label.shape)
+
     # Convert to PyTorch tensors
     dtype = torch.get_default_dtype()
     dataset = {}
@@ -45,6 +61,12 @@ def random_data(distribution, n_samples=1000, n_features=2, n_labels=1, loc=0.0,
     dataset['test_input'] = torch.from_numpy(test_input).type(dtype).to(device)
     dataset['train_label'] = torch.from_numpy(train_label).type(dtype).to(device)
     dataset['test_label'] = torch.from_numpy(test_label).type(dtype).to(device)
+
+    # dataset['train_input'] = torch.from_numpy(train_input).type(dtype).to(device)
+    # dataset['test_input'] = torch.from_numpy(test_input).type(dtype).to(device)
+    # dataset['train_label'] = torch.from_numpy(train_label).type(torch.long).to(device)
+    # dataset['test_label'] = torch.from_numpy(test_label).type(torch.long).to(device)
+
     return dataset
 
 def mnist_data(device="cpu", seed=0):

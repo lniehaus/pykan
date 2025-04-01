@@ -7,7 +7,8 @@ import matplotlib.pyplot as plt
 def plot_train_data(dataset, title):
     X = dataset['train_input']
     y = dataset['train_label']
-    plt.scatter(X[:, 0].cpu().detach().numpy(), X[:, 1].cpu().detach().numpy(), c=y[:, 0].cpu().detach().numpy())
+    #plt.scatter(X[:, 0].cpu().detach().numpy(), X[:, 1].cpu().detach().numpy(), c=y[:, 0].cpu().detach().numpy())
+    plt.scatter(X[:,0].cpu().detach().numpy(), X[:,1].cpu().detach().numpy(), c=y[:].cpu().detach().numpy())
     plt.title(title)
     plt.xlabel('Feature 1')
     plt.ylabel('Feature 2')
