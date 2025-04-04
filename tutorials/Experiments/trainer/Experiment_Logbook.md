@@ -166,7 +166,7 @@ The activations in 10 layer moon show that the mean of the last layer gets up, s
 Default init: the 
 
 # Results of width_dataset_init_10
-
+here grid=5
 Default initialization shows functions, that somewhat resemple basis functions.
 http://127.0.0.1:5030/#/experiments/901457137512269164/runs/2e3940d127df4f9fac74d17dc6e42ab9/artifacts
 Xavier_in_out initialization shows functions that are much more complex.

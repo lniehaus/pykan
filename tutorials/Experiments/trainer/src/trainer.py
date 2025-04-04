@@ -5,11 +5,9 @@ import torch
 import numpy as np
 import mlflow
 import mlflow.pytorch
-from datasets import moon_data, random_data
+from datasets import random_data, moon_data, mnist_data, cifar10_data
 from plotter import plot_train_data, plot_predictions, plot_violins, plot_violins_extended, plot_mean_std
 from video import create_video
-
-
 
 # SYMBOLIC FORMULA
 def symbolic_regression(model, dataset):
@@ -71,7 +69,7 @@ def parse_args():
     parser.add_argument('--update_grid', type=str2bool, default=False, help='Whether to update the grid during training')
 
     # Dataset
-    parser.add_argument('--dataset', type=str, choices=['random', 'moon'], default='random', help='Select Dataset')
+    parser.add_argument('--dataset', type=str, choices=['random', 'moon', 'mnist', 'cifar10'], default='random', help='Select Dataset')
     parser.add_argument('--moon_noise_level', type=float, default=0, help='Adjust the noise for the moon dataset in the KAN')
     parser.add_argument('--random_distribution', type=str, choices=['uniform', 'normal'], default='random', help='Random Distribution')
     parser.add_argument('--random_input_dim', type=int, default=2, help='random Dataset Input Dimension')
@@ -135,7 +133,16 @@ def main():
             device=device
             )
         input_dim = 2
-        output_dim = 1
+        output_dim = 2
+    elif args.dataset == "mnist":
+        dataset = mnist_data(device=device)
+        input_dim = 784
+        output_dim = 10
+    elif args.dataset == "cifar10":
+        dataset = cifar10_data(device=device, subset_size=10_000, grayscale=True)
+        input_dim = 1024 # grayscale
+        #input_dim = 3072 # rgb
+        output_dim = 10
 
 
     video_folder=f"./figures/{args.experiment_name}/{run_id}/video"
@@ -186,14 +193,14 @@ def main():
     # )
     # mlflow.log_figure(fig, "kan-grad-violins-initialized.png")
 
-    # Update plot_violins_extended call
-    fig = plot_violins_extended(
-        model=model, 
-        dataset=dataset, 
-        sample_size=100, 
-        title=f"Train Accuracy: Width: {args.hidden_width}, Init Mode: {args.init_mode}"
-    )
-    mlflow.log_figure(fig, "kan-activations-violins-extended-initialized.png")
+    # # Update plot_violins_extended call
+    # fig = plot_violins_extended(
+    #     model=model, 
+    #     dataset=dataset, 
+    #     sample_size=100, 
+    #     title=f"Train Accuracy: Width: {args.hidden_width}, Init Mode: {args.init_mode}"
+    # )
+    # mlflow.log_figure(fig, "kan-activations-violins-extended-initialized.png")
 
     # Update plot_mean_std call
     fig = plot_mean_std(
@@ -231,23 +238,33 @@ def main():
     #     return torch.mean((torch.argmax(model(dataset['test_input']), dim=1) == dataset['test_label']).type(dtype))
 
 
+
+
     def train_acc():
-        dtype = torch.get_default_dtype()
-        # Get the predicted class indices
-        predictions = torch.argmax(model(dataset['train_input']), dim=1)
-        # Get the true class indices from one-hot encoded labels
-        true_labels = torch.argmax(dataset['train_label'], dim=1)
-        # Calculate accuracy
-        return torch.mean((predictions == true_labels).type(dtype))
+        return torch.mean((torch.argmax(model(dataset['train_input']), dim=1) == dataset['train_label']).float())
 
     def test_acc():
-        dtype = torch.get_default_dtype()
-        # Get the predicted class indices
-        predictions = torch.argmax(model(dataset['test_input']), dim=1)
-        # Get the true class indices from one-hot encoded labels
-        true_labels = torch.argmax(dataset['test_label'], dim=1)
-        # Calculate accuracy
-        return torch.mean((predictions == true_labels).type(dtype))
+        return torch.mean((torch.argmax(model(dataset['test_input']), dim=1) == dataset['test_label']).float())
+
+
+
+    # def train_acc():
+    #     dtype = torch.get_default_dtype()
+    #     # Get the predicted class indices
+    #     predictions = torch.argmax(model(dataset['train_input']), dim=1)
+    #     # Get the true class indices from one-hot encoded labels
+    #     true_labels = torch.argmax(dataset['train_label'], dim=1)
+    #     # Calculate accuracy
+    #     return torch.mean((predictions == true_labels).type(dtype))
+
+    # def test_acc():
+    #     dtype = torch.get_default_dtype()
+    #     # Get the predicted class indices
+    #     predictions = torch.argmax(model(dataset['test_input']), dim=1)
+    #     # Get the true class indices from one-hot encoded labels
+    #     true_labels = torch.argmax(dataset['test_label'], dim=1)
+    #     # Calculate accuracy
+    #     return torch.mean((predictions == true_labels).type(dtype))
     
 
     noises = np.array([0.001, 0.01, 0.1, 1, 10, 100, 1000])
@@ -262,7 +279,8 @@ def main():
                         metrics=(train_acc, test_acc), 
                         update_grid=args.update_grid,
                         img_folder=video_folder,
-                        save_fig=args.save_video
+                        save_fig=args.save_video,
+                        loss_fn=torch.nn.CrossEntropyLoss()
                         )
     print(f"train_acc: {results['train_acc'][-1]:2f}, test_acc: {results['test_acc'][-1]:2f}")
 
@@ -300,14 +318,14 @@ def main():
     )
     mlflow.log_figure(fig, "kan-grad-violins-trained.png")
 
-    # Update plot_violins_extended call
-    fig = plot_violins_extended(
-        model=model, 
-        dataset=dataset, 
-        sample_size=100, 
-        title=f"Train Accuracy: {max(results['train_acc']):.2f}, Width: {args.hidden_width}, Init Mode: {args.init_mode}"
-    )
-    mlflow.log_figure(fig, "kan-activations-violins-extended-trained.png")
+    # # Update plot_violins_extended call
+    # fig = plot_violins_extended(
+    #     model=model, 
+    #     dataset=dataset, 
+    #     sample_size=100, 
+    #     title=f"Train Accuracy: {max(results['train_acc']):.2f}, Width: {args.hidden_width}, Init Mode: {args.init_mode}"
+    # )
+    # mlflow.log_figure(fig, "kan-activations-violins-extended-trained.png")
 
     # Update plot_mean_std call
     fig = plot_mean_std(

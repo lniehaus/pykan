@@ -1,9 +1,9 @@
 #!/bin/bash
 
 # Execution
-export JOB_NUM=20
+export JOB_NUM=10
 # Utility
-export experiment_name="width_dataset_init_16"
+export experiment_name="width_dataset_init_26"
 export device_index=0
 export seed=0
 # Model
@@ -31,7 +31,7 @@ export dataset='random'
 export moon_noise_level=0.5
 export random_distribution='uniform'
 export random_input_dim=2
-export random_output_dim=1
+export random_output_dim=2
 export random_uniform_range_min=-1
 export random_uniform_range_max=1
 export random_normal_mean=0
