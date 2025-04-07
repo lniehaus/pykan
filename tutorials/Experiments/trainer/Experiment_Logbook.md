@@ -276,6 +276,37 @@ default on random has 0.5 train_acc
 
 why are the activations of xavier_in_out so big and the splines show no sign of being at the border
 
+# Results of dataset_init_03
+All results available
+hidden_width = 3
+cifar10; xavier_in_out; test_acc = 0.356 
+mnist; xavier_in_out; test_acc = 0.815 
+# Results of dataset_init_10
+All results available
+hidden_width = 6
+cifar10; xavier_in_out; test_acc = 0.423 
+mnist; xavier_in_out; test_acc = 0.909
+# Results of dataset_init_09
+Some runs exited
+hidden_width = 8
+cifar10; xavier_in_out; test_acc = --- 
+mnist; xavier_in_out; test_acc = 0.947
+# Results of dataset_init_08
+Some runs exited
+hidden_width = 9
+cifar10; xavier_in_out; test_acc = 0.471
+mnist; xavier_in_out; test_acc = --- 
+
+# dataset_init conclusion
+The preliminary results of dataset_init for cifar10 and mnist show that a bigger width currently can result in the model dying (vram?).
+Additionally they show, that the KAN is not yes satisfied with the architecture.
+The bigger the width, the better the accuracy.
+--ToDo--
+- Experment: Adjust Width and Height - check
+- Plot: Violin Plot of summed activations - partly needs impl in codebase
+- Set Default as 0.1 and 0.3
+- width depth on cpu
+
 # Introduction
 
 grid -1, 1

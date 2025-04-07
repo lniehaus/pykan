@@ -1,10 +1,10 @@
 #!/bin/bash
 
 # Execution
-export JOB_NUM=10
+export JOB_NUM=2
 # Utility
-export experiment_name="depth_dataset_init_26"
-export device_index=0
+export experiment_name="depth_dataset_init_31"
+export device_index=1
 export seed=0
 # Model
 export hidden_width=5
@@ -30,8 +30,8 @@ export update_grid=false
 export dataset='random'
 export moon_noise_level=0.5
 export random_distribution='uniform'
-export random_input_dim=2
-export random_output_dim=2
+export random_input_dim=50
+export random_output_dim=50
 export random_uniform_range_min=-1
 export random_uniform_range_max=1
 export random_normal_mean=0
@@ -46,18 +46,21 @@ export save_model=false # deep models scale horribly and are super big when save
 echo "EXPERIMENT_NAME: $experiment_name"
 
 
-#widths=(10 20 30 40 50 60 70 80 90 100)
+depths=(20 15 10 5 4 3 2 1)
 #depths=(100 90 80 70 60 50 40 30 20 10)
 #depths=(10 9 8 7 6 5 4 3 2 1)
 #depths=(100 50 10 5 1)
-depths=(5 4 3 2 1)
+#depths=(5 4 3 2 1)
 #init_modes=('default' 'native_noise' 'width_in' 'width_out' 'xavier_in' 'xavier_out' 'xavier_torch')
-init_modes=('default' 'native_noise' 'width_in' 'xavier_in' 'xavier_torch' 'width_in_num' 'xavier_in_num' 'width_in_out' 'xavier_in_out' 'width_in_out_num' 'xavier_in_out_num')
-datasets=('random' 'moon')
+#init_modes=('default' 'native_noise' 'width_in' 'xavier_in' 'xavier_torch' 'width_in_num' 'xavier_in_num' 'width_in_out' 'xavier_in_out' 'width_in_out_num' 'xavier_in_out_num')
+#init_modes=('default' 'width_in' 'xavier_in' 'xavier_torch' 'width_in_out' 'xavier_in_out')
+init_modes=('default-0_1' 'default-0_3' 'width_in' 'xavier_in' 'xavier_torch' 'width_in_out' 'xavier_in_out')
+#datasets=('random' 'moon' 'mnist' 'cifar10')
+datasets=('cifar10' 'mnist' 'moon' 'random')
 
 index=0
-for dataset in "${datasets[@]}"; do
-    for hidden_depth in "${depths[@]}"; do
+for hidden_depth in "${depths[@]}"; do
+    for dataset in "${datasets[@]}"; do
         for init_mode in "${init_modes[@]}"; do
             toggle_devive_index=$((index % 2))
             python src/trainer.py \
@@ -81,7 +84,7 @@ for dataset in "${datasets[@]}"; do
                 --moon_noise_level $moon_noise_level \
                 --random_distribution $random_distribution \
                 --random_input_dim $hidden_width \
-                --random_output_dim $random_output_dim \
+                --random_output_dim $hidden_width \
                 --random_uniform_range_min $random_uniform_range_min \
                 --random_uniform_range_max $random_uniform_range_max \
                 --random_normal_mean $random_normal_mean \

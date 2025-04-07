@@ -115,6 +115,12 @@ class KANLayer(nn.Module):
         # CHANGED
         if init_mode == 'default':
             noises = (torch.rand(self.num+1, self.in_dim, self.out_dim) - 1/2) * noise_scale / num
+        elif init_mode == 'default-0_1': 
+            noises = (torch.rand(self.num+1, self.in_dim, self.out_dim) - 1/2) * 0.1 / num
+        elif init_mode == 'default-0_3':
+            noises = (torch.rand(self.num+1, self.in_dim, self.out_dim) - 1/2) * 0.3 / num
+        elif init_mode == 'default-0_5':
+            noises = (torch.rand(self.num+1, self.in_dim, self.out_dim) - 1/2) * 0.5 / num
         elif init_mode == 'native_noise':
             noises = (torch.rand(self.num+1, self.in_dim, self.out_dim) - 1/2) * 2.0 * noise_scale
         elif init_mode == 'width_in':

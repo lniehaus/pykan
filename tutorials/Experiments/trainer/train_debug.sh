@@ -5,16 +5,18 @@ export experiment_name="train-debug"
 export device_index=0
 export seed=0
 # Model
-export hidden_width=2
-export hidden_depth=2
+export hidden_width=3
+export hidden_depth=3
 export steps=10
 export grid=5
 export k=3
 export mode='default'
 export base_fun='zero'
 export spline_noise_scale=0.3
-export init_mode='default'
-#export init_mode='xavier_in_out'
+#export init_mode='default-0_1'
+#export init_mode='default-0_5'
+export init_mode='xavier_in_out'
+
 # Trainable
 export sp_trainable=false
 export sb_trainable=false
@@ -22,9 +24,9 @@ export affine_trainable=false
 export update_grid=false
 # Dataset
 #export dataset='random'
-#export dataset='moon'
+export dataset='moon'
 #export dataset='mnist'
-export dataset='cifar10'
+#export dataset='cifar10'
 export moon_noise_level=0.5
 export random_distribution='uniform'
 export random_input_dim=2

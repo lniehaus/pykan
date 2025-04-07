@@ -66,7 +66,7 @@ def plot_predictions(model, dataset, title):
     # Make predictions on the test input
     with torch.no_grad():  # Disable gradient calculation for inference
         predictions = model(dataset['test_input'])  # Get model predictions
-        predicted_labels = torch.round(predictions[:, 0]).cpu().detach().numpy()  # Round predictions to get class labels
+        predicted_labels = torch.argmax(predictions, dim=1).cpu().detach().numpy()  # Use argmax for class labels
         print(predicted_labels)
 
     # Create a scatter plot of the test input colored by the predicted labels
@@ -85,6 +85,8 @@ def plot_predictions(model, dataset, title):
 def plot_mean_std(model, title):
     act_means = []
     act_stds = []
+    act_summed_means = []
+    act_summed_stds = []
     coef_means = []
     coef_stds = []
 
@@ -93,11 +95,16 @@ def plot_mean_std(model, title):
         with torch.no_grad():
             act_means.append(postacts.mean().cpu().numpy())
             act_stds.append(postacts.std().cpu().numpy())
+
+            act_summed = postacts.sum(axis=2, keepdims=True)
+            act_summed_means.append(act_summed.mean().cpu().numpy())
+            act_summed_stds.append(act_summed.std().cpu().numpy())
+
             coef_means.append(coef.mean().cpu().numpy())
             coef_stds.append(coef.std().cpu().numpy())
 
-    fig, axs = plt.subplots(2,2,figsize=(12,6))
-    axs[0][0].plot(act_means, label=f"Act_means: {np.mean(act_means):2e}")
+    fig, axs = plt.subplots(3,2,figsize=(12,6))
+    axs[0][0].plot(act_means, label=f"Act Means: {np.mean(act_means):2e}")
     axs[0][0].set_title(title)
     axs[0][0].set_xlabel("Layer Index")
     axs[0][0].set_ylabel("Mean Value")
@@ -108,16 +115,27 @@ def plot_mean_std(model, title):
     axs[0][1].set_ylabel("Standard Deviation")
     axs[0][1].legend()
 
-    axs[1][0].plot(coef_means, label=f"Coef Means: {np.mean(coef_means):2e}")
+    axs[1][0].plot(act_means, label=f"Act Summed means: {np.mean(act_summed_means):2e}")
     axs[1][0].set_title(title)
     axs[1][0].set_xlabel("Layer Index")
     axs[1][0].set_ylabel("Mean Value")
     axs[1][0].legend()
-    axs[1][1].plot(coef_stds, label=f"Coef Stds: {np.mean(coef_stds):2e}")
+    axs[1][1].plot(act_stds, label=f"Act Summed Stds: {np.mean(act_summed_means):2e}")
     axs[1][1].set_title(title)
     axs[1][1].set_xlabel("Layer Index")
     axs[1][1].set_ylabel("Standard Deviation")
     axs[1][1].legend()
+
+    axs[2][0].plot(coef_means, label=f"Coef Means: {np.mean(coef_means):2e}")
+    axs[2][0].set_title(title)
+    axs[2][0].set_xlabel("Layer Index")
+    axs[2][0].set_ylabel("Mean Value")
+    axs[2][0].legend()
+    axs[2][1].plot(coef_stds, label=f"Coef Stds: {np.mean(coef_stds):2e}")
+    axs[2][1].set_title(title)
+    axs[2][1].set_xlabel("Layer Index")
+    axs[2][1].set_ylabel("Standard Deviation")
+    axs[2][1].legend()
 
     plt.tight_layout()
     return fig
@@ -211,6 +229,47 @@ def plot_violins_extended(model, dataset, title, sample_size=100):
     plt.title(title)
     plt.xlabel('Layer')
     plt.ylabel('Activations')
+    plt.tight_layout()
+
+    # Show plot
+    #plt.show()
+    return plt.gcf()
+
+def plot_summed_violins(model, title, mode="act", sample_size=100):
+    data = []
+    for layer_index, (act_fun, acts, preacts, postacts, postsplines) in enumerate(zip(model.act_fun, model.acts, model.spline_preacts, model.spline_postacts, model.spline_postsplines)):
+        
+        coef = act_fun.coef
+
+        dist_np = None  # Changed from acts_np to dist_np
+        if mode == "act":
+            dist_np = coef.cpu().detach().numpy()
+            dist_np = dist_np.sum(axis=2, keepdims=True)
+
+        # Ensure dist_np is a 1D array
+        dist_np = dist_np.flatten()
+
+        # Sample a subset of activations if there are more than sample_size
+        if len(dist_np) > sample_size:
+            sampled_acts = np.random.choice(dist_np, sample_size, replace=False)
+        else:
+            sampled_acts = dist_np  # Use all if less than sample_size
+        
+        # Append layer index and sampled activations to the data list
+        data.extend([(layer_index, act) for act in sampled_acts])
+
+    # Convert the data into a DataFrame
+    df = pd.DataFrame(data, columns=['Layer', 'Activation'])
+
+    plt.figure(figsize=(12, 6))
+
+    # Create a violin plot
+    sns.violinplot(data=df, x="Layer", y="Activation", inner="quart")
+
+    # Adding labels and title
+    plt.title(title)
+    plt.xlabel('Layer')
+    plt.ylabel(f'{mode}')
     plt.tight_layout()
 
     # Show plot

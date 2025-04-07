@@ -6,7 +6,7 @@ import numpy as np
 import mlflow
 import mlflow.pytorch
 from datasets import random_data, moon_data, mnist_data, cifar10_data
-from plotter import plot_train_data, plot_predictions, plot_violins, plot_violins_extended, plot_mean_std
+from plotter import plot_train_data, plot_predictions, plot_violins, plot_violins_extended, plot_summed_violins, plot_mean_std
 from video import create_video
 
 # SYMBOLIC FORMULA
@@ -59,7 +59,7 @@ def parse_args():
     parser.add_argument('--mode', type=str, choices=['default', 'abs', 'sigmoid', 'relu'], default='default', help='Activation mode')
     parser.add_argument('--base_fun', type=str, choices=['silu', 'identity', 'zero'], default='silu', help='base function')
     parser.add_argument('--spline_noise_scale', type=float, default=0.3, help='Adjust the spline noise at initialization')
-    parser.add_argument('--init_mode', type=str, choices=['default', 'native_noise', 'width_in', 'width_out', 'xavier_in', 'xavier_out', 'xavier_torch', 'width_in_num', 'xavier_in_num', 'width_in_out', 'xavier_in_out', 'width_in_out_num', 'xavier_in_out_num'], default='default', help='Initialization Mode')
+    parser.add_argument('--init_mode', type=str, choices=['default', 'default-0_1', 'default-0_3', 'default-0_5', 'native_noise', 'width_in', 'width_out', 'xavier_in', 'xavier_out', 'xavier_torch', 'width_in_num', 'xavier_in_num', 'width_in_out', 'xavier_in_out', 'width_in_out_num', 'xavier_in_out_num'], default='default', help='Initialization Mod. default=use spline_noise_scale parameter, default-0_1=use sns 0.1, default-0_3=use sns 0.3, default-0_5=use sns 0.5')
     #parser.add_argument('--native_noise_scale', type=bool, default=False, help='directly use the native spline_noise_scale value as std')
 
     # Trainable Features
@@ -90,6 +90,10 @@ def parse_args():
     return args
 
 def main():
+
+    #torch.set_default_dtype(torch.float64)
+    #torch.set_default_dtype(torch.float16)
+
     args = parse_args()
     print(args.experiment_name)
     device = torch.device(f'cuda:{args.device_index}' if torch.cuda.is_available() else 'cpu')
@@ -103,6 +107,16 @@ def main():
     # Save All Args in mlflow
     for arg, value in vars(args).items():
             mlflow.log_param(arg, value)
+
+    # set spline noise scale
+    if args.init_mode == "default":
+        args.spline_noise_scale = args.spline_noise_scale
+    elif args.init_mode == "default-0_1":
+        args.spline_noise_scale = 0.1
+    elif args.init_mode == "default-0_3":
+        args.spline_noise_scale = 0.3
+    elif args.init_mode == "default-0_5":
+        args.spline_noise_scale = 0.5
 
     # Get Dataset for training
     input_dim = None
@@ -139,9 +153,9 @@ def main():
         input_dim = 784
         output_dim = 10
     elif args.dataset == "cifar10":
-        dataset = cifar10_data(device=device, subset_size=10_000, grayscale=True)
-        input_dim = 1024 # grayscale
-        #input_dim = 3072 # rgb
+        dataset = cifar10_data(device=device, subset_size=100_000, grayscale=False)
+        #input_dim = 1024 # grayscale
+        input_dim = 3072 # rgb
         output_dim = 10
 
 
@@ -201,6 +215,14 @@ def main():
     #     title=f"Train Accuracy: Width: {args.hidden_width}, Init Mode: {args.init_mode}"
     # )
     # mlflow.log_figure(fig, "kan-activations-violins-extended-initialized.png")
+
+    fig = plot_summed_violins(
+        model=model, 
+        sample_size=10_000, 
+        title=f"Train Accuracy: Width: {args.hidden_width}, Init Mode: {args.init_mode}",
+        mode='act'
+    )
+    mlflow.log_figure(fig, "kan-act-summed-violins-initialized.png")
 
     # Update plot_mean_std call
     fig = plot_mean_std(
@@ -326,6 +348,14 @@ def main():
     #     title=f"Train Accuracy: {max(results['train_acc']):.2f}, Width: {args.hidden_width}, Init Mode: {args.init_mode}"
     # )
     # mlflow.log_figure(fig, "kan-activations-violins-extended-trained.png")
+
+    fig = plot_summed_violins(
+        model=model, 
+        sample_size=10_000, 
+        title=f"Train Accuracy: Width: {args.hidden_width}, Init Mode: {args.init_mode}",
+        mode='act'
+    )
+    mlflow.log_figure(fig, "kan-act-summed-violins-trained.png")
 
     # Update plot_mean_std call
     fig = plot_mean_std(

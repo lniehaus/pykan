@@ -249,11 +249,18 @@ def cifar10_data(device="cpu", seed=0, subset_size=1_000, grayscale=False):
     train_dataset = datasets.CIFAR10('./datasets/CIFAR10_DATA', download=True, train=True, transform=transform)
     test_dataset = datasets.CIFAR10('./datasets/CIFAR10_DATA', download=True, train=False, transform=transform)
 
-    # Create a subset of the first 100 data points
-    train_input_subset = torch.utils.data.Subset(train_dataset.data, range(subset_size))
-    test_input_subset = torch.utils.data.Subset(test_dataset.data, range(subset_size))
-    train_label_subset = torch.utils.data.Subset(train_dataset.targets, range(subset_size))
-    test_label_subset = torch.utils.data.Subset(test_dataset.targets, range(subset_size))
+    train_input_subset = train_dataset.data
+    test_input_subset = test_dataset.data
+    train_label_subset = train_dataset.targets
+    test_label_subset = test_dataset.targets
+
+    if subset_size <= len(train_dataset):
+        # Create a subset of the first 100 data points
+        train_input_subset = torch.utils.data.Subset(train_dataset.data, range(subset_size))
+        #test_input_subset = torch.utils.data.Subset(test_dataset.data, range(subset_size))
+        #train_label_subset = torch.utils.data.Subset(train_dataset.targets, range(subset_size))
+        #test_label_subset = torch.utils.data.Subset(test_dataset.targets, range(subset_size))
+
 
     # Convert to PyTorch tensors and move data to the specified device
     dtype = torch.get_default_dtype()
