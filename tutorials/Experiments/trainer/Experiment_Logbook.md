@@ -307,6 +307,28 @@ The bigger the width, the better the accuracy.
 - Set Default as 0.1 and 0.3
 - width depth on cpu
 
+# ERROR on the first model of width_dataset_init_on_51 and 52
+description:   0%|                                                          | 0/100 [00:01<?, ?it/s]                                                                                              [347/1939]
+Traceback (most recent call last):                                                                                                                                                                          
+  File "/net/store/cv/users/luniehaus/projects/pykan_experiments/pykan/tutorials/Experiments/trainer/src/trainer.py", line 409, in <module>                                                                 
+    main()                                                                                                                                                                                                  
+  File "/net/store/cv/users/luniehaus/projects/pykan_experiments/pykan/tutorials/Experiments/trainer/src/trainer.py", line 298, in main                                                                     
+    results = model.fit(dataset,                                                                                                                                                                            
+  File "/net/store/cv/users/luniehaus/projects/pykan_experiments/pykan/kan/MultKAN.py", line 1567, in fit                                                                                                   
+    self.update_grid(dataset['train_input'][train_id])                                                                                                                                                      
+  File "/net/store/cv/users/luniehaus/projects/pykan_experiments/pykan/kan/MultKAN.py", line 727, in update_grid                                                                                            
+    self.update_grid_from_samples(x)                                                                                                                                                                        
+  File "/net/store/cv/users/luniehaus/projects/pykan_experiments/pykan/kan/MultKAN.py", line 721, in update_grid_from_samples                                                                               
+    self.act_fun[l].update_grid_from_samples(self.acts[l])                                                                                                                                                  
+  File "/net/store/cv/users/luniehaus/projects/pykan_experiments/pykan/kan/KANLayer.py", line 295, in update_grid_from_samples                                                                              
+    self.coef.data = curve2coef(x_pos, y_eval, self.grid, self.k)                                                                                                                                           
+  File "/net/store/cv/users/luniehaus/projects/pykan_experiments/pykan/kan/spline.py", line 131, in curve2coef
+    return coef
+UnboundLocalError: local variable 'coef' referenced before assignment
+
+This is the line that causes the error:
+coef = torch.linalg.lstsq(mat, y_eval).solution[:,:,:,0]
+
 # Introduction
 
 grid -1, 1

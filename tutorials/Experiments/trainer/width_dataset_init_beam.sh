@@ -1,19 +1,20 @@
 #!/bin/bash
 
 # Execution
-export JOB_NUM=2
+export JOB_NUM=1
 # Utility
-export experiment_name="width_dataset_init_40"
+export experiment_name="width_dataset_init_on_52"
 export device_index=1
 export seed=0
 # Model
-export hidden_width=6
+export hidden_width=5
 export hidden_depth=5
 export steps=100
 export grid=5
 export k=3
-export mode='default-0_1'
-export base_fun='zero'
+export mode='default'
+#export base_fun='zero'
+export base_fun='silu'
 export spline_noise_scale=0.3
 export init_mode='default'
 # Trainable On
@@ -22,10 +23,10 @@ export sb_trainable=true
 export affine_trainable=true
 export update_grid=true
 # Trainable Off
-export sp_trainable=false
-export sb_trainable=false
-export affine_trainable=false
-export update_grid=false
+# export sp_trainable=false
+# export sb_trainable=false
+# export affine_trainable=false
+# export update_grid=false
 # Dataset
 export dataset='random'
 export moon_noise_level=0.5
@@ -54,9 +55,10 @@ widths=(20 15 10 5 4 3 2 1)
 #init_modes=('default' 'native_noise' 'width_in' 'width_out' 'xavier_in' 'xavier_out' 'xavier_torch')
 #init_modes=('default' 'native_noise' 'width_in' 'xavier_in' 'xavier_torch' 'width_in_num' 'xavier_in_num' 'width_in_out' 'xavier_in_out' 'width_in_out_num' 'xavier_in_out_num')
 #init_modes=('default' 'width_in' 'xavier_in' 'xavier_torch' 'width_in_out' 'xavier_in_out')
-init_modes=('default-0_1' 'default-0_3' 'width_in' 'xavier_in' 'xavier_torch' 'width_in_out' 'xavier_in_out')
+init_modes=('default-0_1' 'default-0_3' 'default-0_5' 'width_in' 'xavier_in' 'xavier_torch' 'width_in_out' 'xavier_in_out')
 #datasets=('random' 'moon' 'mnist' 'cifar10')
-datasets=('cifar10' 'mnist' 'moon' 'random')
+#datasets=('cifar10' 'mnist' 'moon' 'random')
+datasets=('mnist' 'moon')
 
 index=0
 for hidden_width in "${widths[@]}"; do
@@ -65,7 +67,7 @@ for hidden_width in "${widths[@]}"; do
             toggle_devive_index=$((index % 2))
             python src/trainer.py \
                 --experiment_name $experiment_name \
-                --device_index $toggle_devive_index \
+                --device_index $device_index \
                 --seed $seed \
                 --hidden_width $hidden_width \
                 --hidden_depth $hidden_depth \

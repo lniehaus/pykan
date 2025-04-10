@@ -17,3 +17,4 @@ figures/
 mlruns/
 model/
 data/
+**/datasets/
