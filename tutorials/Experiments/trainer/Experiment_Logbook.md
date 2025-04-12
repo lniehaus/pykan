@@ -329,6 +329,11 @@ UnboundLocalError: local variable 'coef' referenced before assignment
 This is the line that causes the error:
 coef = torch.linalg.lstsq(mat, y_eval).solution[:,:,:,0]
 
+# Trainable parameters experiments
+An experiment with train_debug.sh indicated that update_grid=true results in unstable behaviour.
+The accuracy with mnist stays at 10% (chance level) when update_grid is enabled.
+
+
 # Introduction
 
 grid -1, 1
