@@ -199,7 +199,8 @@ class MultKAN(nn.Module):
         self.grid_eps = grid_eps
         self.grid_range = grid_range
             
-        
+        self.probes = []
+
         for l in range(self.depth):
             # splines
             if isinstance(grid, list):
@@ -215,6 +216,11 @@ class MultKAN(nn.Module):
             
             sp_batch = KANLayer(in_dim=width_in[l], out_dim=width_out[l+1], num=grid_l, k=k_l, noise_scale=noise_scale, scale_base_mu=scale_base_mu, scale_base_sigma=scale_base_sigma, scale_sp=1., base_fun=base_fun, grid_eps=grid_eps, grid_range=grid_range, sp_trainable=sp_trainable, sb_trainable=sb_trainable, sparse_init=sparse_init, mode=self.mode, init_mode=self.init_mode)
             self.act_fun.append(sp_batch)
+            
+            # classifier probes
+            #probe = KANLayer(in_dim=width_out[l+1], out_dim=width_out[-1], num=grid_l, k=k_l, noise_scale=noise_scale, scale_base_mu=scale_base_mu, scale_base_sigma=scale_base_sigma, scale_sp=1., base_fun=base_fun, grid_eps=grid_eps, grid_range=grid_range, sp_trainable=sp_trainable, sb_trainable=sb_trainable, sparse_init=sparse_init, mode=self.mode, init_mode=self.init_mode)
+            probe = nn.Linear(width_out[l+1], width_out[-1])
+            self.probes.append(probe)
 
         self.node_bias = []
         self.node_scale = []
@@ -313,6 +319,9 @@ class MultKAN(nn.Module):
         for kanlayer in self.act_fun:
             kanlayer.to(device)
             
+        for probe in self.probes:
+            probe.to(device)
+
         for symbolic_kanlayer in self.symbolic_fun:
             symbolic_kanlayer.to(device)
             
@@ -808,6 +817,9 @@ class MultKAN(nn.Module):
 
         self.acts.append(x)  # acts shape: (batch, width[l])
 
+        # classifier probes
+        self.probe_outputs = []
+
         for l in range(self.depth):
             
             x_numerical, preacts, postacts_numerical, postspline = self.act_fun[l](x)
@@ -881,6 +893,10 @@ class MultKAN(nn.Module):
             
             self.acts.append(x.detach())
             
+            # classifier probes
+            # Add probe output after each hidden layer (before output layer)
+            #if l < (self.depth - 1):
+            self.probe_outputs.append(self.probes[len(self.probe_outputs)](x))
         
         return x
 
@@ -1516,6 +1532,7 @@ class MultKAN(nn.Module):
         results = {}
         results['train_loss'] = []
         results['test_loss'] = []
+        results['probes_train_loss'] = []
         results['reg'] = []
         if metrics != None:
             for i in range(len(metrics)):
@@ -1563,6 +1580,15 @@ class MultKAN(nn.Module):
             train_id = np.random.choice(dataset['train_input'].shape[0], batch_size, replace=False)
             test_id = np.random.choice(dataset['test_input'].shape[0], batch_size_test, replace=False)
 
+
+            # classifier probes
+            # adjust by adding losses
+            probe_losses = [loss_fn(probe_out, dataset['train_label'][train_id]) for probe_out in self.probe_outputs]
+            probe_losses = torch.Tensor(probe_losses)
+            probe_losses = torch.sum(probe_losses)
+            #loss = loss + sum(probe_losses)
+            results['probes_train_loss'].append(torch.sqrt(probe_losses).cpu().detach().numpy())
+
             if _ % grid_update_freq == 0 and _ < stop_grid_update_step and update_grid and _ >= start_grid_update_step:
                 self.update_grid(dataset['train_input'][train_id])
 
@@ -1581,6 +1607,7 @@ class MultKAN(nn.Module):
                 else:
                     reg_ = torch.tensor(0.)
                 loss = train_loss + lamb * reg_
+
                 optimizer.zero_grad()
                 loss.backward()
                 optimizer.step()

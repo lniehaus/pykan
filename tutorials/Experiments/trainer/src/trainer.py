@@ -268,6 +268,61 @@ def main():
     def test_acc():
         return torch.mean((torch.argmax(model(dataset['test_input']), dim=1) == dataset['test_label']).float())
 
+    def probe_train_acc_0():
+        model.probe_outputs
+        truth = dataset['train_label']
+        output = model(dataset['train_input'])
+        pred = model.probe_outputs[0]
+        return torch.mean((torch.argmax(pred, dim=1) == truth).float())
+    
+    def probe_test_acc_0():
+        model.probe_outputs
+        truth = dataset['test_label']
+        output = model(dataset['test_input'])
+        pred = model.probe_outputs[0]
+        return torch.mean((torch.argmax(pred, dim=1) == truth).float())
+
+    def probe_train_acc_1():
+        model.probe_outputs
+        truth = dataset['train_label']
+        output = model(dataset['train_input'])
+        pred = model.probe_outputs[1]
+        return torch.mean((torch.argmax(pred, dim=1) == truth).float())
+    
+    def probe_test_acc_1():
+        model.probe_outputs
+        truth = dataset['test_label']
+        output = model(dataset['test_input'])
+        pred = model.probe_outputs[1]
+        return torch.mean((torch.argmax(pred, dim=1) == truth).float())
+
+    def probe_train_acc_2():
+        model.probe_outputs
+        truth = dataset['train_label']
+        output = model(dataset['train_input'])
+        pred = model.probe_outputs[2]
+        return torch.mean((torch.argmax(pred, dim=1) == truth).float())
+    
+    def probe_test_acc_2():
+        model.probe_outputs
+        truth = dataset['test_label']
+        output = model(dataset['test_input'])
+        pred = model.probe_outputs[2]
+        return torch.mean((torch.argmax(pred, dim=1) == truth).float())
+
+    def probe_train_acc_3():
+        model.probe_outputs
+        truth = dataset['train_label']
+        output = model(dataset['train_input'])
+        pred = model.probe_outputs[3]
+        return torch.mean((torch.argmax(pred, dim=1) == truth).float())
+    
+    def probe_test_acc_3():
+        model.probe_outputs
+        truth = dataset['test_label']
+        output = model(dataset['test_input'])
+        pred = model.probe_outputs[3]
+        return torch.mean((torch.argmax(pred, dim=1) == truth).float())
 
 
     # def train_acc():
@@ -294,11 +349,19 @@ def main():
     spline_noise_scale_class = indices[0] if indices.size > 0 else -1
     mlflow.log_param("spline_noise_scale_class", spline_noise_scale_class)
 
+    metrics = (train_acc, test_acc, 
+               probe_train_acc_0, probe_test_acc_0,
+               probe_train_acc_1, probe_test_acc_1, 
+               probe_train_acc_2, probe_test_acc_2
+               #probe_train_acc_3, probe_test_acc_3
+               )
+    
+
     #results = model.fit(dataset, opt="LBFGS", steps=steps, metrics=(train_acc, test_acc, coef_mean, coef_std), update_grid=update_grid)
     results = model.fit(dataset, 
                         opt="LBFGS", 
                         steps=args.steps, 
-                        metrics=(train_acc, test_acc), 
+                        metrics=metrics, 
                         update_grid=args.update_grid,
                         img_folder=video_folder,
                         save_fig=args.save_video,
