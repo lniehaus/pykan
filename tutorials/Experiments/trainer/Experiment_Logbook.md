@@ -332,7 +332,17 @@ coef = torch.linalg.lstsq(mat, y_eval).solution[:,:,:,0]
 # Trainable parameters experiments
 An experiment with train_debug.sh indicated that update_grid=true results in unstable behaviour.
 The accuracy with mnist stays at 10% (chance level) when update_grid is enabled.
+-> This is true, update_grid results in unstable behaviour
 
+# width_dataset_init_off_56
+experiments on moon with a small width (3) indicate, that width_in, width_in_out, kaiming_leaky_in,  works better ~0.8 train_acc ~0.8 test_acc compared to xavier_torch ~0.67 train_acc, ~0.55 test_acc.
+at width 10 the train and test acc is roughly the same ~0.95, ~0.75 for kaiming_leaky_in, kaiming_in, xavier_torch
+
+# Symbolic Regression Experiment
+I suspect that there is a optimal std for a given width.
+The hypothesis is that the std and the width correlate
+-> Create a Heatmap where x=width and y=std/bound. The color represents the train_acc or test_acc
+Can I create a dataset with which I can use a KAN width symbolic regression to find the optimal initialization?
 
 # Introduction
 

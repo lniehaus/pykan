@@ -349,10 +349,10 @@ def main():
     spline_noise_scale_class = indices[0] if indices.size > 0 else -1
     mlflow.log_param("spline_noise_scale_class", spline_noise_scale_class)
 
-    metrics = (train_acc, test_acc, 
-               probe_train_acc_0, probe_test_acc_0,
-               probe_train_acc_1, probe_test_acc_1, 
-               probe_train_acc_2, probe_test_acc_2
+    metrics = (train_acc, test_acc
+               #probe_train_acc_0, probe_test_acc_0,
+               #probe_train_acc_1, probe_test_acc_1, 
+               #probe_train_acc_2, probe_test_acc_2
                #probe_train_acc_3, probe_test_acc_3
                )
     
@@ -377,6 +377,37 @@ def main():
     if args.save_model:
         mlflow.pytorch.log_model(model, "model")
 
+    # classifier probes
+    from sklearn.linear_model import SGDClassifier
+    model.eval()
+
+    # Train Accuracy Classifier Probe
+    model(dataset['train_input'])
+    targets = dataset['train_label'].cpu().detach().numpy()
+    for i, postacts in enumerate(model.spline_postacts):
+        postacts_np = postacts.cpu().detach().numpy()
+        postacts_np = postacts_np.reshape(postacts_np.shape[0], -1)
+        print("data shape",postacts_np.shape)
+        classifier = SGDClassifier(penalty=None, loss="log_loss", learning_rate="constant", eta0=0.01)
+        classifier.fit(postacts_np, targets)
+        score = classifier.score(postacts_np, targets)
+        name = f"classifier_probe_train_accuracy"
+        print(name, score)
+        mlflow.log_metric(name, score, step=i)
+
+    # Test Accuracy Classifier Probe
+    model(dataset['test_input'])
+    targets = dataset['test_label'].cpu().detach().numpy()
+    for i, postacts in enumerate(model.spline_postacts):
+        postacts_np = postacts.cpu().detach().numpy()
+        postacts_np = postacts_np.reshape(postacts_np.shape[0], -1)
+        print("data shape",postacts_np.shape)
+        classifier = SGDClassifier(penalty=None, loss="log_loss", learning_rate="constant", eta0=0.01)
+        classifier.fit(postacts_np, targets)
+        score = classifier.score(postacts_np, targets)
+        name = f"classifier_probe_test_accuracy"
+        print(name, score)
+        mlflow.log_metric(name, score, step=i)
 
     model(dataset['train_input'])
     # Update plot_violins call
@@ -448,6 +479,9 @@ def main():
         title=f"Trained Model - Train Accuracy: {max(results['train_acc']):.2f}, Width: {args.hidden_width}, Init Mode: {args.init_mode}"
     )
     mlflow.log_figure(fig, "train_data_trained.png")
+
+    # 
+
 
     # SAVE Video
     if args.save_video:
