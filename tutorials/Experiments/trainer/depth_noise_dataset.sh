@@ -3,12 +3,12 @@
 # Execution
 export JOB_NUM=20
 # Utility
-export experiment_name="width_noise_dataset_05"
+export experiment_name="depth_noise_dataset_02"
 export device_index=1
 export seed=0
 # Model
-export hidden_width=0
-export hidden_depth=1
+export hidden_width=2
+export hidden_depth=0
 export steps=100
 export grid=5
 export k=3
@@ -51,7 +51,7 @@ echo "EXPERIMENT_NAME: $experiment_name"
 #noise_scales=(2 1 0.5 0.3 0.1 0.05 0.01)
 
 #widths=(2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21 22 23 24 25 26 27 28 29 30 31 32 33 34 35 36 37 38 39 40 41 42 43 44 45 46 47 48 49 50)
-widths=(2 3 4 7 11 17 27 41 64 100)
+depths=(0 1 2 3 4 7 11 17 27 41 64 100)
 #noise_scales=(0.01 0.05 0.1 0.2 0.3 0.4 0.5 0.6 0.7 0.8 0.9 1 1.1 1.2 1.3 1.4 1.5 1.6 1.7 1.8 1.9 2 2.1 2.2 2.3 2.4 2.5 2.6 2.7 2.8 2.9 3 3.1 3.2 3.3 3.4 3.5 3.6 3.7 3.8 3.9 4)
 noise_scales=(0.02 0.03 0.04 0.06 0.10 0.14 0.21 0.31 0.46 0.68 1.00)
 datasets=('moon' 'random')
@@ -60,7 +60,7 @@ index=0
 
 for spline_noise_scale in "${noise_scales[@]}"; do
     for dataset in "${datasets[@]}"; do
-        for hidden_width in "${widths[@]}"; do
+        for hidden_depth in "${depths[@]}"; do
             toggle_device_index=$((index % 2))
             python src/trainer.py \
                 --experiment_name $experiment_name \
@@ -82,7 +82,7 @@ for spline_noise_scale in "${noise_scales[@]}"; do
                 --dataset $dataset \
                 --moon_noise_level $moon_noise_level \
                 --random_distribution $random_distribution \
-                --random_input_dim $hidden_width \
+                --random_input_dim $random_input_dim \
                 --random_output_dim $random_output_dim \
                 --random_uniform_range_min $random_uniform_range_min \
                 --random_uniform_range_max $random_uniform_range_max \

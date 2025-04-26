@@ -338,6 +338,15 @@ The accuracy with mnist stays at 10% (chance level) when update_grid is enabled.
 experiments on moon with a small width (3) indicate, that width_in, width_in_out, kaiming_leaky_in,  works better ~0.8 train_acc ~0.8 test_acc compared to xavier_torch ~0.67 train_acc, ~0.55 test_acc.
 at width 10 the train and test acc is roughly the same ~0.95, ~0.75 for kaiming_leaky_in, kaiming_in, xavier_torch
 
+# width_dataset_init_off_58
+default 0.5
+http://127.0.0.1:5020/#/experiments/941592410386083679/runs/c1ca6d0800294d979c9839caebe1aff0/artifacts
+xavier_in
+http://127.0.0.1:5020/#/experiments/941592410386083679/runs/49d36e3217a0469f8d24b777f210629b/artifacts
+the gradients for default 0.5 are much smaller 1e^-6 than xavier_in 1e^⁻2.
+We should calculate a necessary grid range -1,1 for the given initialization.
+
+
 # Symbolic Regression Experiment
 I suspect that there is a optimal std for a given width.
 The hypothesis is that the std and the width correlate
