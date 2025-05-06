@@ -98,8 +98,6 @@ class KANLayer(nn.Module):
         self.k = k
         self.mode = mode
 
-        # print("num", num)
-
         grid = torch.linspace(grid_range[0], grid_range[1], steps=num + 1)[None,:].expand(self.in_dim, num+1)
         
         # print("grid.shape", grid.shape)

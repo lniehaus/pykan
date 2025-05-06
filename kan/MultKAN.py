@@ -93,7 +93,7 @@ class MultKAN(nn.Module):
             the number of times rewind() has been called
         device : str
     '''
-    def __init__(self, width=None, grid=3, k=3, mult_arity = 2, noise_scale=0.3, scale_base_mu=0.0, scale_base_sigma=1.0, base_fun='silu', symbolic_enabled=True, affine_trainable=False, grid_eps=0.02, grid_range=[-1, 1], sp_trainable=True, sb_trainable=True, seed=1, save_act=True, sparse_init=False, auto_save=True, first_init=True, ckpt_path='./model', state_id=0, round=0, device='cpu', mode='default', init_mode='default'):
+    def __init__(self, width=None, grid=3, k=3, mult_arity = 2, noise_scale=0.3, scale_base_mu=0.0, scale_base_sigma=1.0, base_fun='silu', symbolic_enabled=True, affine_trainable=False, grid_eps=0.02, grid_range=[-1, 1], sp_trainable=True, sb_trainable=True, seed=1, save_act=True, sparse_init=False, auto_save=True, first_init=True, ckpt_path='./model', state_id=0, round=0, device='cpu', mode='default', init_mode='default', grid_mode='default'):
         '''
         initalize a KAN model
         
@@ -214,7 +214,18 @@ class MultKAN(nn.Module):
                 k_l = k
                     
             
-            sp_batch = KANLayer(in_dim=width_in[l], out_dim=width_out[l+1], num=grid_l, k=k_l, noise_scale=noise_scale, scale_base_mu=scale_base_mu, scale_base_sigma=scale_base_sigma, scale_sp=1., base_fun=base_fun, grid_eps=grid_eps, grid_range=grid_range, sp_trainable=sp_trainable, sb_trainable=sb_trainable, sparse_init=sparse_init, mode=self.mode, init_mode=self.init_mode)
+            # grid_mode='default'
+            if grid_mode == 'default':
+                pass
+            elif grid_mode == 'xavier':
+                bound = torch.sqrt(1.0 / self.in_dim)
+                self.grid_range = [-bound, bound]
+            elif grid_mode == 'xavier_10':
+                bound = torch.sqrt(1.0 / self.in_dim) * 10
+                self.grid_range = [-bound, bound]
+
+
+            sp_batch = KANLayer(in_dim=width_in[l], out_dim=width_out[l+1], num=grid_l, k=k_l, noise_scale=noise_scale, scale_base_mu=scale_base_mu, scale_base_sigma=scale_base_sigma, scale_sp=1., base_fun=base_fun, grid_eps=grid_eps, grid_range=self.grid_range, sp_trainable=sp_trainable, sb_trainable=sb_trainable, sparse_init=sparse_init, mode=self.mode, init_mode=self.init_mode)
             self.act_fun.append(sp_batch)
             
             # # classifier probes

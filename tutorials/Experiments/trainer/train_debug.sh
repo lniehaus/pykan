@@ -5,8 +5,8 @@ export experiment_name="train-debug"
 export device_index=0
 export seed=0
 # Model
-export hidden_width=0
-export hidden_depth=0
+export hidden_width=5
+export hidden_depth=5
 export steps=10
 export grid=5
 export k=3
@@ -16,6 +16,9 @@ export spline_noise_scale=0.3
 #export init_mode='default-0_5'
 #export init_mode='xavier_in_out'
 export init_mode='xavier_torch'
+export grid_mode='default'
+#export grid_mode='xavier'
+#export grid_mode='xavier_10'
 # Trainable On
 export base_fun='silu'
 export sp_trainable=true
@@ -63,6 +66,7 @@ python src/trainer.py \
     --base_fun $base_fun \
     --spline_noise_scale $spline_noise_scale \
     --init_mode $init_mode \
+    --grid_mode $grid_mode \
     --sp_trainable $sp_trainable \
     --sb_trainable $sb_trainable \
     --affine_trainable $affine_trainable \
