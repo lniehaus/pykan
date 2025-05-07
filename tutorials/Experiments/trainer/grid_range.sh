@@ -1,10 +1,10 @@
 #!/bin/bash
 
 # Execution
-export JOB_NUM=2
+export JOB_NUM=1
 # Utility
-export experiment_name="width_grid_02"
-export device_index=1
+export experiment_name="grid_range_08"
+export device_index=0
 export seed=0
 # Model
 export hidden_width=5
@@ -16,7 +16,9 @@ export mode='default'
 #export base_fun='zero'
 export spline_noise_scale=0.3
 export init_mode='default'
-export grid_mode='default'
+#export grid_mode='native'
+export grid_mode='xavier_x'
+export grid_bound=1.0
 # Trainable On
 # export base_fun='silu'
 # export sp_trainable=true
@@ -59,13 +61,18 @@ echo "EXPERIMENT_NAME: $experiment_name"
 #init_modes=('default' 'native_noise' 'width_in' 'xavier_in' 'xavier_torch' 'width_in_num' 'xavier_in_num' 'width_in_out' 'xavier_in_out' 'width_in_out_num' 'xavier_in_out_num')
 #init_modes=('default' 'width_in' 'xavier_in' 'xavier_torch' 'width_in_out' 'xavier_in_out')
 #init_modes=('default-0_1' 'default-0_3' 'default-0_5' 'width_in' 'xavier_in' 'xavier_torch' 'width_in_out' 'xavier_in_out' 'kaiming_in' 'kaiming_in_out' 'kaiming_leaky_in' 'kaiming_leaky_in_out')
-init_modes=('default-0_1' 'default-0_3' 'default-0_5' 'xavier_in' 'xavier_torch' 'kaiming_in' )
+#init_modes=('default-0_1' 'default-0_3' 'default-0_5' 'xavier_in' 'xavier_torch' 'kaiming_in' )
+#init_modes=('default-0_1' 'xavier_in')
+#init_modes=('default-0_1')
+init_modes=('xavier_in' )
+
 #datasets=('random' 'moon' 'mnist' 'cifar10')
 #datasets=('cifar10' 'mnist' 'moon' 'random')
 #datasets=('cifar10' 'moon')
 #datasets=('mnist' 'random')
 #datasets=('mnist' 'moon')
-grid_modes=('default' 'xavier' 'xavier_10')
+#grid_modes=('default' 'xavier' 'xavier_10')
+grid_bounds=(0.1 0.5 1.0 2.0 3.0 4.0 5.0 6.0 7.0 8.0 9.0 10.0)
 
 datasets=('cifar10')
 #datasets=('mnist' 'random' 'moon')
@@ -73,11 +80,12 @@ datasets=('cifar10')
 index=0
 for init_mode in "${init_modes[@]}"; do
     for dataset in "${datasets[@]}"; do
-        for grid_mode in "${grid_modes[@]}"; do
+        #for grid_mode in "${grid_modes[@]}"; do
+        for grid_bound in "${grid_bounds[@]}"; do
             toggle_device_index=$((index % 2))
             python src/trainer.py \
                 --experiment_name $experiment_name \
-                --device_index $toggle_device_index \
+                --device_index $device_index \
                 --seed $seed \
                 --hidden_width $hidden_width \
                 --hidden_depth $hidden_depth \
@@ -89,6 +97,7 @@ for init_mode in "${init_modes[@]}"; do
                 --spline_noise_scale $spline_noise_scale \
                 --init_mode $init_mode \
                 --grid_mode $grid_mode \
+                --grid_bound $grid_bound \
                 --sp_trainable $sp_trainable \
                 --sb_trainable $sb_trainable \
                 --affine_trainable $affine_trainable \

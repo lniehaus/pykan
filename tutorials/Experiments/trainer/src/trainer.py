@@ -61,7 +61,8 @@ def parse_args():
     parser.add_argument('--spline_noise_scale', type=float, default=0.3, help='Adjust the spline noise at initialization')
     parser.add_argument('--init_mode', type=str, choices=['default', 'default-0_1', 'default-0_3', 'default-0_5', 'native_noise', 'width_in', 'width_out', 'xavier_in', 'xavier_out', 'xavier_torch', 'width_in_num', 'xavier_in_num', 'width_in_out', 'xavier_in_out', 'width_in_out_num', 'xavier_in_out_num', 'kaiming_in', 'kaiming_in_out', 'kaiming_leaky_in', 'kaiming_leaky_in_out'], default='default', help='Initialization Mod. default=use spline_noise_scale parameter, default-0_1=use sns 0.1, default-0_3=use sns 0.3, default-0_5=use sns 0.5')
     #parser.add_argument('--native_noise_scale', type=bool, default=False, help='directly use the native spline_noise_scale value as std')
-    parser.add_argument('--grid_mode', type=str, choices=['default', 'xavier', 'xavier_10'], default='default', help='Grid Range Mode. default=use grid_range.')
+    parser.add_argument('--grid_mode', type=str, choices=['default', 'native', 'xavier', 'xavier_10', 'xavier_x'], default='default', help='Grid Range Mode. default=use grid_range. xavier_x uses the grid_bound to scale the xavier range.')
+    parser.add_argument('--grid_bound', type=float, default=1, help='If grid_mode is set to native, use this value for the bounds of the grid. default=1.0')   
 
     # Trainable Features
     parser.add_argument('--sp_trainable', type=str2bool, default=False, help='Whether to make the spline parameters trainable')
@@ -173,6 +174,8 @@ def main():
             noise_scale=args.spline_noise_scale,
             mode=args.mode,
             init_mode=args.init_mode,
+            grid_mode=args.grid_mode,
+            grid_bound=args.grid_bound,
             ckpt_path=ckpt_folder
             )
 

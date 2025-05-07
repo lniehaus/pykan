@@ -16,7 +16,11 @@ export spline_noise_scale=0.3
 #export init_mode='default-0_5'
 #export init_mode='xavier_in_out'
 export init_mode='xavier_torch'
-export grid_mode='default'
+#export grid_mode='default'
+#export grid_mode='xavier'
+#export grid_mode='xavier_10'
+export grid_mode='xavier_x'
+export grid_bound=1.0
 #export grid_mode='xavier'
 #export grid_mode='xavier_10'
 # Trainable On
@@ -67,6 +71,7 @@ python src/trainer.py \
     --spline_noise_scale $spline_noise_scale \
     --init_mode $init_mode \
     --grid_mode $grid_mode \
+    --grid_bound $grid_bound \
     --sp_trainable $sp_trainable \
     --sb_trainable $sb_trainable \
     --affine_trainable $affine_trainable \

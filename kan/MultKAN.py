@@ -93,7 +93,7 @@ class MultKAN(nn.Module):
             the number of times rewind() has been called
         device : str
     '''
-    def __init__(self, width=None, grid=3, k=3, mult_arity = 2, noise_scale=0.3, scale_base_mu=0.0, scale_base_sigma=1.0, base_fun='silu', symbolic_enabled=True, affine_trainable=False, grid_eps=0.02, grid_range=[-1, 1], sp_trainable=True, sb_trainable=True, seed=1, save_act=True, sparse_init=False, auto_save=True, first_init=True, ckpt_path='./model', state_id=0, round=0, device='cpu', mode='default', init_mode='default', grid_mode='default'):
+    def __init__(self, width=None, grid=3, k=3, mult_arity = 2, noise_scale=0.3, scale_base_mu=0.0, scale_base_sigma=1.0, base_fun='silu', symbolic_enabled=True, affine_trainable=False, grid_eps=0.02, grid_range=[-1, 1], sp_trainable=True, sb_trainable=True, seed=1, save_act=True, sparse_init=False, auto_save=True, first_init=True, ckpt_path='./model', state_id=0, round=0, device='cpu', mode='default', init_mode='default', grid_mode='default', grid_bound=1.0):
         '''
         initalize a KAN model
         
@@ -216,12 +216,24 @@ class MultKAN(nn.Module):
             
             # grid_mode='default'
             if grid_mode == 'default':
-                pass
+                self.grid_range = grid_range
+            if grid_mode == 'native':
+                self.grid_range = [-grid_bound, grid_bound]
             elif grid_mode == 'xavier':
-                bound = torch.sqrt(1.0 / self.in_dim)
+                #tmp = torch.Tensor(1.0 / width_in[l])
+                #bound = torch.sqrt(1.0 / width_in[l])
+                #bound = torch.sqrt(1.0 / width_in[l].float())
+                bound = torch.sqrt(torch.tensor(1.0 / width_in[l]))
                 self.grid_range = [-bound, bound]
             elif grid_mode == 'xavier_10':
-                bound = torch.sqrt(1.0 / self.in_dim) * 10
+                #tmp = torch.Tensor(1.0 / width_in[l])
+                #bound = torch.sqrt(tmp) * 10
+                bound = torch.sqrt(torch.tensor(1.0 / width_in[l])) * 10
+                self.grid_range = [-bound, bound]
+            elif grid_mode == 'xavier_x':
+                #tmp = torch.Tensor(1.0 / width_in[l])
+                #bound = torch.sqrt(tmp) * 10
+                bound = torch.sqrt(torch.tensor(1.0 / width_in[l])) * grid_bound
                 self.grid_range = [-bound, bound]
 
 
