@@ -97,6 +97,7 @@ class KANLayer(nn.Module):
         self.num = num
         self.k = k
         self.mode = mode
+        self.grid_range = grid_range
 
         grid = torch.linspace(grid_range[0], grid_range[1], steps=num + 1)[None,:].expand(self.in_dim, num+1)
         

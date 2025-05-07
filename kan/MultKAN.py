@@ -516,7 +516,9 @@ class MultKAN(nn.Module):
                      round=self.round,
                      device=self.device,
                      mode=self.mode, 
-                     init_mode=self.init_mode
+                     init_mode=self.init_mode,
+                     grid_mode=self.grid_mode,
+                     grid_bound=self.grid_bound
                      )
             
         model_new.initialize_from_another_model(self, self.cache_data)
