@@ -473,11 +473,41 @@ Questions:
   -> maybe through grid? 
 
 
+more experiments
+for the grid
+----------------
+
+form: kat
+dataset random 50 -> 2
+init: xavier_in
+grid: default
+http://127.0.0.1:5020/#/experiments/328105937783879903/runs/f693160d35fd4d8b9805481f957c7e4d/model-metrics
+train_acc: 1.0
+-> converges slowly ~40 epoch
+classifier probes
+-> layer 0, 1, 2 are close to 0.5
+-> layer 3, 4, 5 show signs of having learned something
+linear rise at layer 3
+
+form: kat
+dataset random 50 -> 2
+init: xavier_in
+grid: xavier_2
+http://127.0.0.1:5020/#/experiments/328105937783879903/runs/9115e8f8a35048e0b1b7b575d6df5e03/model-metrics
+train_acc: 1.0
+-> converges faster than default at ~10 epoch
+classifier probes
+-> layer 0 is close to 0.5
+-> layer 1, 2, 3, 4, 5 show signs of having learned something
+sigmoid like rise for the whole network
+
+
 # ToDo:
 - save metric for max accuracy -> check
 - make horizontal lines for the grid_range of each layer into the summed up violin plots -> check
 - also add grid_range_extended as hlines -> check
 - random xavier_x experiments for linear 4,2 architecture
+- calc linear regions of a kan, like for mlps' in the understanding deep learning book
 
 # Ideas
 - Plot matrix that shows the var coef/activation with width and height on the axes
