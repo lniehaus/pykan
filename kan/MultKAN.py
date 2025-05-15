@@ -166,13 +166,10 @@ class MultKAN(nn.Module):
         self.mode = mode
         self.init_mode = init_mode
         
-        #print('haha1', width)
         for i in range(len(width)):
             #print(type(width[i]), type(width[i]) == int)
             if type(width[i]) == int or type(width[i]) == np.int64:
                 width[i] = [width[i],0]
-                
-        #print('haha2', width)
             
         self.width = width
         
@@ -220,19 +217,12 @@ class MultKAN(nn.Module):
             if grid_mode == 'native':
                 self.grid_range = [-grid_bound, grid_bound]
             elif grid_mode == 'xavier':
-                #tmp = torch.Tensor(1.0 / width_in[l])
-                #bound = torch.sqrt(1.0 / width_in[l])
-                #bound = torch.sqrt(1.0 / width_in[l].float())
                 bound = torch.sqrt(torch.tensor(1.0 / width_in[l]))
                 self.grid_range = [-bound, bound]
             elif grid_mode == 'xavier_10':
-                #tmp = torch.Tensor(1.0 / width_in[l])
-                #bound = torch.sqrt(tmp) * 10
                 bound = torch.sqrt(torch.tensor(1.0 / width_in[l])) * 10
                 self.grid_range = [-bound, bound]
             elif grid_mode == 'xavier_x':
-                #tmp = torch.Tensor(1.0 / width_in[l])
-                #bound = torch.sqrt(tmp) * 10
                 bound = torch.sqrt(torch.tensor(1.0 / width_in[l])) * grid_bound
                 self.grid_range = [-bound, bound]
 

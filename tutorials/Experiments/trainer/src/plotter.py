@@ -67,7 +67,7 @@ def plot_predictions(model, dataset, title):
     with torch.no_grad():  # Disable gradient calculation for inference
         predictions = model(dataset['test_input'])  # Get model predictions
         predicted_labels = torch.argmax(predictions, dim=1).cpu().detach().numpy()  # Use argmax for class labels
-        print(predicted_labels)
+        #print(predicted_labels)
 
     # Create a scatter plot of the test input colored by the predicted labels
     plt.figure(figsize=(8, 6))
@@ -237,6 +237,8 @@ def plot_violins_extended(model, dataset, title, sample_size=100):
 
 def plot_summed_violins(model, title, mode="act", sample_size=100):
     data = []
+    grid_ranges = []  # To store grid ranges for each layer
+
     for layer_index, (act_fun, acts, preacts, postacts, postsplines) in enumerate(zip(model.act_fun, model.acts, model.spline_preacts, model.spline_postacts, model.spline_postsplines)):
         
         coef = act_fun.coef
@@ -258,6 +260,12 @@ def plot_summed_violins(model, title, mode="act", sample_size=100):
         # Append layer index and sampled activations to the data list
         data.extend([(layer_index, act) for act in sampled_acts])
 
+        # Store the grid range for this layer
+        grid_range = act_fun.grid_range
+        grid_range_extended = act_fun.grid_range_extended
+        grid_ranges.append((grid_range,grid_range_extended))
+        
+
     # Convert the data into a DataFrame
     df = pd.DataFrame(data, columns=['Layer', 'Activation'])
 
@@ -265,6 +273,17 @@ def plot_summed_violins(model, title, mode="act", sample_size=100):
 
     # Create a violin plot
     sns.violinplot(data=df, x="Layer", y="Activation", inner="quart")
+
+    # Adding horizontal lines for each layer's grid range
+    for layer_index, (grid_range, grid_range_extended) in enumerate(grid_ranges):
+        dist = 1/len(grid_ranges)
+        xmin = layer_index * dist
+        xmax = (layer_index * dist) + dist
+        plt.axhline(y=grid_range[0], xmin=xmin, xmax=xmax, color='blue', linestyle='--', label=f'Grid Range, Layer {layer_index} Lower Bound' if layer_index == 0 else "")
+        plt.axhline(y=grid_range[1], xmin=xmin, xmax=xmax, color='blue', linestyle='--', label=f'Grid Range, Layer {layer_index} Lower Bound' if layer_index == 0 else "")
+        plt.axhline(y=grid_range_extended[0], xmin=xmin, xmax=xmax, color='red', linestyle='--', label=f'Grid Range Extended, Layer {layer_index} Upper Bound' if layer_index == 0 else "")
+        plt.axhline(y=grid_range_extended[1], xmin=xmin, xmax=xmax, color='red', linestyle='--', label=f'Grid Range Extended, Layer {layer_index} Upper Bound' if layer_index == 0 else "")
+
 
     # Adding labels and title
     plt.title(title)

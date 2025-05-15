@@ -359,7 +359,125 @@ grid -1, 1
 After training a KAN the coef of the b-splines, the mean value of the activations roughtly center around 0.
 This indicates, that the coefs closer to 0 are more important then the coefs at the border of the grid -1,1.
 
+# grid_rang_07 and grid_range_08
+Why does grid_range_08 overfit so much more compared to grid_range_07?
+grid_range_07 sets the grid_range the same for each layer, while the grid_range goes from 0.1 to 10.
+grid_range_08 sets the grid_range different for each layer (dependent on the in_dim) , while the xavier result gets scaled from 0.1 to 10
+grid_range_08 increases overfitting, however it also icreases the train accuracy.
 
+# debug experiments
+global settings
+---------------
+hidden_depth: 10
+init: default_0.1
+grid: default
+trainable: on
+dataset: random
+input: 4
+output: 2
+
+form: square
+train: 0.5
+test 0.5
+
+form: linear
+train: 0.52
+test 0.48
+
+form: kat
+train: 0.5
+test 0.49
+
+-> the tests showed no partical difference on standard config
+
+global settings
+---------------
+init: xavier_in
+
+form: square
+train: 0.73
+test 0.49
+
+form: linear
+loss: nan
+train: 0.65
+test 0.5
+
+form: kat
+train: 0.77
+test 0.5
+
+-> using xavier_in as initialization increases the train accuracy for all architectures
+
+global settings
+---------------
+init: xavier_in
+grid: xavier_2
+
+form: square
+train: 0.73
+test 0.5
+
+form: linear
+train: 0.62
+test 0.49
+
+form: kat
+train: 0.65
+test 0.5
+
+-> grid: xavier_2 seems to worsen the results of kat
+
+# KANbefair
+The kanbefair repo shows good (>40%) results for cifar10.
+This can be related to the small learning rate of 0.001
+if we set the learning rate to 1, then default_0.1 collapses
+
+# Debug experiments
+
+Learning Rate: 0.001
+
+-> xavier_in; 100 epochs
+http://127.0.0.1:5020/#/experiments/328105937783879903/runs/c5ee8ec02d07431f8d8416317715ac8f/model-metrics
+-> xavier_in; 1000 epochs
+http://127.0.0.1:5020/#/experiments/328105937783879903/runs/30d008338db84257a6166d29df6bac95/model-metrics
+
+-> default_0.1; 100 epochs 
+http://127.0.0.1:5020/#/experiments/328105937783879903/runs/a89a854d58524b5d9d1e8db5f6b2953b/model-metrics
+-> default_0.1; 1000 epochs 
+http://127.0.0.1:5020/#/experiments/328105937783879903/runs/cd08a02aa0c04e3b8bbd89aa4ee2293a/model-metrics
+
+xavier_in already achieves 92% on random data after 100 epochs.
+default_0.1 only achieves 65% on random data after 100 epochs.
+However, default_0.1 eventually achieves 95% after 1000 epochs.
+While xavier_in achieves an accuracy if 100% after 1000 epochs.
+This indicates that xavier_in allows for a much faster conversion.
+Nevertheless, this can also indicate that xavier_in overfits more.
+
+Inspecting the Classifier Probes gives a better picture about what happens in the models.
+On the one hand default_0.1 for 100 and 1000 epochs the classifier probes indicate that only the last layer contains useful information.
+Layer 0 ... 4 do mostly contain random garbage (maybe they dont even change) and only the last layer (5) learns from the random garbage.
+On the other hand xavier_in for 100 and 1000 epochs the classifier probes indicate some for of information in layer 3, 4 and 5.
+Layers 0, 1, 2 are still garbage, but the network gets better through the layers instead of relying on the last layer alone.
+This indicates that xavier_in allows the learning of more than just the last layer.
+
+weird observation
+sometimes xavier_in only reaches around 60%.
+Maybe a higher initialization is more vulnerable to a bad initialization and thus running in a local minimum
+
+Questions:
+----------
+- Does xavier_in only create more overfitting or is it also able to learn (generalize) something?
+  -> make_classification from scipy as a customizable dataset
+- Can we tweak the network even more, so layers 0, 1, 2 are also trained with useful features?
+  -> maybe through grid? 
+
+
+# ToDo:
+- save metric for max accuracy -> check
+- make horizontal lines for the grid_range of each layer into the summed up violin plots -> check
+- also add grid_range_extended as hlines -> check
+- random xavier_x experiments for linear 4,2 architecture
 
 # Ideas
 - Plot matrix that shows the var coef/activation with width and height on the axes

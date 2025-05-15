@@ -97,7 +97,7 @@ class KANLayer(nn.Module):
         self.num = num
         self.k = k
         self.mode = mode
-        self.grid_range = grid_range
+        
 
         grid = torch.linspace(grid_range[0], grid_range[1], steps=num + 1)[None,:].expand(self.in_dim, num+1)
         
@@ -105,6 +105,14 @@ class KANLayer(nn.Module):
         # print("grid.shape data", grid)
 
         grid = extend_grid(grid, k_extend=k)
+
+        # save defined grid range and grid range extended by order
+        self.grid_range = grid_range
+        self.grid_range_extended = (grid[0][0], grid[0][-1])
+
+        #print("grid", grid)
+        #print("self.grid_range_extended", self.grid_range_extended)
+
 
         # print("grid.shape extended", grid.shape)
         # print("grid.shape extended data", grid)

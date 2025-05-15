@@ -51,6 +51,7 @@ def parse_args():
     parser.add_argument('--seed', type=int, default=0, help='Random seed for reproducibility')
 
     # Model
+    parser.add_argument('--hidden_form', type=str, choices=['square', 'linear', 'kat'], default='square', help='Architecture mode')
     parser.add_argument('--hidden_width', type=int, default=3, help='Width of the hidden layers')
     parser.add_argument('--hidden_depth', type=int, default=1, help='Amount of the hidden layers')
     parser.add_argument('--steps', type=int, default=100, help='Number of training steps')
@@ -63,6 +64,7 @@ def parse_args():
     #parser.add_argument('--native_noise_scale', type=bool, default=False, help='directly use the native spline_noise_scale value as std')
     parser.add_argument('--grid_mode', type=str, choices=['default', 'native', 'xavier', 'xavier_10', 'xavier_x'], default='default', help='Grid Range Mode. default=use grid_range. xavier_x uses the grid_bound to scale the xavier range.')
     parser.add_argument('--grid_bound', type=float, default=1, help='If grid_mode is set to native, use this value for the bounds of the grid. default=1.0')   
+    parser.add_argument('--learning_rate', type=float, default=1, help='Learning Rate for the optimizer')   
 
     # Trainable Features
     parser.add_argument('--sp_trainable', type=str2bool, default=False, help='Whether to make the spline parameters trainable')
@@ -166,6 +168,39 @@ def main():
 
     hidden = [args.hidden_width]*args.hidden_depth
     width = [input_dim, *hidden, output_dim]
+
+    #hidden_form = "square"
+    width = []
+    hidden_widths = []
+    if args.hidden_form == "square":
+        hidden_widths = [args.hidden_width]*args.hidden_depth
+        #width = [input_dim, *hidden_widths, output_dim]
+    elif args.hidden_form == "linear":
+        # Create a list of widths that interpolate from input_dim to output_dim
+        if args.hidden_depth > 0:
+            # Generate linearly spaced values between input_dim and output_dim
+            hidden_widths = [int(x) for x in np.linspace(input_dim, output_dim, args.hidden_depth + 2)[1:-1]]
+        else:
+            hidden_widths = []
+        # Combine input_dim, hidden widths, and output_dim
+        #width = [input_dim, *hidden_widths, output_dim]
+    elif args.hidden_form == "kat":
+        # Create a list of widths that interpolate from input_dim to output_dim
+        first_layer = int(2*input_dim) + 1
+        if args.hidden_depth > 0:
+            # Generate linearly spaced values between input_dim and output_dim
+            hidden_widths = [int(x) for x in np.linspace(first_layer, output_dim, args.hidden_depth + 1)[0:-1]]
+        else:
+            hidden_widths = []
+        #width = [input_dim, *hidden_widths, output_dim]
+        #print("width", width)
+    else:
+        raise ValueError("hidden_form must be either 'square' or 'linear'")
+
+    print("hidden_widths", hidden_widths)
+    width = [input_dim, *hidden_widths, output_dim]
+    print("width", width)
+
     model = KAN(
             width=width, device=device,
             grid=args.grid, k=args.k, seed=args.seed,
@@ -293,7 +328,8 @@ def main():
                         update_grid=args.update_grid,
                         img_folder=video_folder,
                         save_fig=args.save_video,
-                        loss_fn=torch.nn.CrossEntropyLoss()
+                        loss_fn=torch.nn.CrossEntropyLoss(),
+                        lr=args.learning_rate
                         )
     print(f"train_acc: {results['train_acc'][-1]:2f}, test_acc: {results['test_acc'][-1]:2f}")
 
@@ -301,6 +337,10 @@ def main():
     for i in range(len(results['train_acc'])):
         for key in results.keys():
             mlflow.log_metric(key, results[key][i], step=i)
+
+
+    mlflow.log_metric("train_acc_max", max(results['train_acc']), step=0)
+    mlflow.log_metric("test_acc_max", max(results['test_acc']), step=0)
 
     if args.save_model:
         mlflow.pytorch.log_model(model, "model")
@@ -315,12 +355,12 @@ def main():
     for i, postacts in enumerate(model.spline_postacts):
         postacts_np = postacts.cpu().detach().numpy()
         postacts_np = postacts_np.reshape(postacts_np.shape[0], -1)
-        print("data shape",postacts_np.shape)
+        #print("data shape",postacts_np.shape)
         classifier = SGDClassifier(penalty=None, loss="log_loss", learning_rate="constant", eta0=0.01)
         classifier.fit(postacts_np, targets)
         score = classifier.score(postacts_np, targets)
         name = f"classifier_probe_train_accuracy"
-        print(name, score)
+        #print(name, score)
         mlflow.log_metric(name, score, step=i)
 
     # Test Accuracy Classifier Probe
@@ -329,12 +369,12 @@ def main():
     for i, postacts in enumerate(model.spline_postacts):
         postacts_np = postacts.cpu().detach().numpy()
         postacts_np = postacts_np.reshape(postacts_np.shape[0], -1)
-        print("data shape",postacts_np.shape)
+        #print("data shape",postacts_np.shape)
         classifier = SGDClassifier(penalty=None, loss="log_loss", learning_rate="constant", eta0=0.01)
         classifier.fit(postacts_np, targets)
         score = classifier.score(postacts_np, targets)
         name = f"classifier_probe_test_accuracy"
-        print(name, score)
+        #print(name, score)
         mlflow.log_metric(name, score, step=i)
 
     model(dataset['train_input'])
