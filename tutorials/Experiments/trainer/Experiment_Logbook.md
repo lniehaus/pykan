@@ -501,6 +501,21 @@ classifier probes
 -> layer 1, 2, 3, 4, 5 show signs of having learned something
 sigmoid like rise for the whole network
 
+--> The results indicate, that adjusting the grid by the layer width allows to save information in earlier layers.
+-> test if classifier probes show information in earlier layers when using default_0.1 as well as for xavier_2.
+
+This experiment shows:
+init: default_0.1
+grid: default
+http://127.0.0.1:5020/#/experiments/328105937783879903/runs/d2ecedae55f948928d07e588c98da72e/model-metrics
+
+init: default_0.1
+grid: xavier_2
+http://127.0.0.1:5020/#/experiments/328105937783879903/runs/c3224f329031478ab809e3ea291112a5/model-metrics
+
+using "grid: default" results in a situation with the classifier probes, 
+where only the last layer 5 (100%) learns something
+using "grid: xavier_2" shows that layer 4 (90%) and 5 (100%) learned something
 
 # ToDo:
 - save metric for max accuracy -> check
