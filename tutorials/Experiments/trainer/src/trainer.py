@@ -5,7 +5,7 @@ import torch
 import numpy as np
 import mlflow
 import mlflow.pytorch
-from datasets import random_data, moon_data, mnist_data, cifar10_data
+from datasets import random_data, moon_data, mnist_data, cifar10_data, make_classification_data, mnist1d_data
 from plotter import plot_train_data, plot_predictions, plot_violins, plot_violins_extended, plot_summed_violins, plot_mean_std
 from video import create_video
 
@@ -65,6 +65,12 @@ def parse_args():
     parser.add_argument('--grid_mode', type=str, choices=['default', 'native', 'xavier', 'xavier_10', 'xavier_x'], default='default', help='Grid Range Mode. default=use grid_range. xavier_x uses the grid_bound to scale the xavier range.')
     parser.add_argument('--grid_bound', type=float, default=1, help='If grid_mode is set to native, use this value for the bounds of the grid. default=1.0')   
     parser.add_argument('--learning_rate', type=float, default=1, help='Learning Rate for the optimizer')   
+    parser.add_argument('--lamb', type=float, default=0.0, help='Weight decay for the optimizer')
+    parser.add_argument('--lamb_l1', type=float, default=1.0, help='Weight for the L1 loss')
+    parser.add_argument('--lamb_entropy', type=float, default=0.0, help='Weight for the entropy loss')
+    parser.add_argument('--lamb_coef', type=float, default=0.0, help='Weight for the coefficient loss')
+    parser.add_argument('--lamb_coefdiff', type=float, default=0.0, help='Weight for the coefficient difference loss')
+    parser.add_argument('--optimizer', type=str, choices=['Adam', 'LBFGS'], default='LBFGS', help='Optimizer for training')
 
     # Trainable Features
     parser.add_argument('--sp_trainable', type=str2bool, default=False, help='Whether to make the spline parameters trainable')
@@ -73,7 +79,7 @@ def parse_args():
     parser.add_argument('--update_grid', type=str2bool, default=False, help='Whether to update the grid during training')
 
     # Dataset
-    parser.add_argument('--dataset', type=str, choices=['random', 'moon', 'mnist', 'cifar10'], default='random', help='Select Dataset')
+    parser.add_argument('--dataset', type=str, choices=['random', 'moon', 'mnist', 'cifar10', 'make_classification', 'mnist1d'], default='random', help='Select Dataset')
     parser.add_argument('--moon_noise_level', type=float, default=0, help='Adjust the noise for the moon dataset in the KAN')
     parser.add_argument('--random_distribution', type=str, choices=['uniform', 'normal'], default='random', help='Random Distribution')
     parser.add_argument('--random_input_dim', type=int, default=2, help='random Dataset Input Dimension')
@@ -161,6 +167,21 @@ def main():
         #input_dim = 1024 # grayscale
         input_dim = 3072 # rgb
         output_dim = 10
+    elif args.dataset == "make_classification":
+        dataset = make_classification_data(n_samples=1000, 
+                                           n_features=args.random_input_dim, 
+                                           n_labels=args.random_output_dim, 
+                                           n_informative=2, 
+                                           n_redundant=0, 
+                                           seed=args.seed, 
+                                           device=device)
+        #input_dim = 1024 # grayscale
+        input_dim = args.random_input_dim # rgb
+        output_dim = args.random_output_dim
+    elif args.dataset == "mnist1d":
+        dataset = mnist1d_data(device=device, seed=args.seed, subset_size=100_000)
+        input_dim = 40
+        output_dim = 10
 
 
     video_folder=f"./figures/{args.experiment_name}/{run_id}/video"
@@ -195,9 +216,9 @@ def main():
         #width = [input_dim, *hidden_widths, output_dim]
         #print("width", width)
     else:
-        raise ValueError("hidden_form must be either 'square' or 'linear'")
+        raise ValueError("hidden_form must be either 'square', 'linear' or 'kat'")
 
-    print("hidden_widths", hidden_widths)
+    #print("hidden_widths", hidden_widths)
     width = [input_dim, *hidden_widths, output_dim]
     print("width", width)
 
@@ -213,7 +234,6 @@ def main():
             grid_bound=args.grid_bound,
             ckpt_path=ckpt_folder
             )
-
 
     model(dataset['train_input'])
 
@@ -322,14 +342,19 @@ def main():
 
     #results = model.fit(dataset, opt="LBFGS", steps=steps, metrics=(train_acc, test_acc, coef_mean, coef_std), update_grid=update_grid)
     results = model.fit(dataset, 
-                        opt="LBFGS", 
+                        opt=args.optimizer, 
                         steps=args.steps, 
                         metrics=metrics, 
                         update_grid=args.update_grid,
                         img_folder=video_folder,
                         save_fig=args.save_video,
                         loss_fn=torch.nn.CrossEntropyLoss(),
-                        lr=args.learning_rate
+                        lr=args.learning_rate,
+                        lamb=args.lamb,
+                        lamb_l1=args.lamb_l1,
+                        lamb_entropy=args.lamb_entropy,
+                        lamb_coef=args.lamb_coef,
+                        lamb_coefdiff=args.lamb_coefdiff
                         )
     print(f"train_acc: {results['train_acc'][-1]:2f}, test_acc: {results['test_acc'][-1]:2f}")
 
@@ -360,7 +385,7 @@ def main():
         classifier.fit(postacts_np, targets)
         score = classifier.score(postacts_np, targets)
         name = f"classifier_probe_train_accuracy"
-        #print(name, score)
+        print("Train Classifier Probe", name, i, score)
         mlflow.log_metric(name, score, step=i)
 
     # Test Accuracy Classifier Probe
@@ -374,7 +399,7 @@ def main():
         classifier.fit(postacts_np, targets)
         score = classifier.score(postacts_np, targets)
         name = f"classifier_probe_test_accuracy"
-        #print(name, score)
+        print("Test Classifier Probe", name, i, score)
         mlflow.log_metric(name, score, step=i)
 
     model(dataset['train_input'])

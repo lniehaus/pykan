@@ -3,6 +3,34 @@ import numpy as np
 from sklearn.datasets import make_moons
 from torchvision import datasets
 from torchvision import transforms
+from sklearn.datasets import make_classification
+from sklearn.model_selection import train_test_split
+from mnist1d.data import make_dataset, get_dataset_args
+
+def make_classification_data(n_samples=1000, n_features=2, n_labels=1, n_informative=2, n_redundant=10, seed=0, device="cpu"):
+    np.random.seed(seed)
+
+    # Generate a synthetic dataset
+    X, y = make_classification(n_samples=n_samples,         # Number of samples
+                            n_features=n_features,          # Total number of features
+                            n_informative=n_informative,    # Number of informative features
+                            n_redundant=n_redundant,        # Number of redundant features
+                            n_classes=n_labels,             # Number of classes
+                            n_clusters_per_class=1,
+                            random_state=seed)
+
+    # Split the dataset into training and testing sets
+    # X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.3, random_state=42)
+    train_input, test_input, train_labels, test_labels = train_test_split(X, y, test_size=0.3, random_state=seed)
+
+    dtype = torch.get_default_dtype()
+    dataset = {}
+    dataset['train_input'] = torch.from_numpy(train_input).type(dtype).to(device)
+    dataset['test_input'] = torch.from_numpy(test_input).type(dtype).to(device)
+    dataset['train_label'] = torch.from_numpy(train_labels).type(torch.long).to(device)
+    dataset['test_label'] = torch.from_numpy(test_labels).type(torch.long).to(device)
+
+    return dataset
 
 # def moon_data(data_noise_level, n_samples=1000,seed=0, device="cpu"):
 #     # Generate the original dataset
@@ -317,3 +345,26 @@ def cifar10_data(device="cpu", seed=0, subset_size=1_000, grayscale=False):
 #     dataset['test_label'] = torch.tensor([test_dataset[i][1] for i in range(len(test_dataset))]).to(device)
 
 #     return dataset
+
+
+def mnist1d_data(device="cpu", seed=0, subset_size=1_000_000):
+    # Set the random seed for reproducibility
+    torch.manual_seed(seed)
+
+    dtype = torch.get_default_dtype()
+
+    defaults = get_dataset_args()
+    data = make_dataset(defaults)
+
+    train_data = data['x'][:subset_size]
+    test_data = data['x_test'][:subset_size]
+    train_labels = data['y'][:subset_size]
+    test_labels = data['y_test'][:subset_size]
+
+    dataset = {}
+    dataset['train_input'] = torch.from_numpy(train_data).type(dtype).to(device)
+    dataset['test_input'] = torch.from_numpy(test_data).type(dtype).to(device)
+    dataset['train_label'] = torch.from_numpy(train_labels).type(torch.long).to(device)
+    dataset['test_label'] = torch.from_numpy(test_labels).type(torch.long).to(device)
+
+    return dataset

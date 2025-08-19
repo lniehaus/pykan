@@ -1,36 +1,54 @@
 #!/bin/bash
 
 # Utility
-export experiment_name="train-debug"
-export device_index=0
+export experiment_name="train-debug-3"
+export device_index=1
 export seed=0
 # Model
 export hidden_form='square'
 export hidden_form='linear'
 export hidden_form='kat'
 export hidden_width=5
-export hidden_depth=5
-export steps=100
+#export hidden_depth=1
+#export hidden_depth=10
+export hidden_depth=13
+export steps=1000
 export grid=5
-#export grid=20
+#export grid=40
 export k=3
 #export k=5
 export mode='default'
 export spline_noise_scale=0.3
-export init_mode='default-0_1'
+#export init_mode='default-0_1'
 #export init_mode='default-0_5'
 #export init_mode='xavier_in_out'
-#export init_mode='xavier_in'
+#export init_mode='xavier_in' 
+export init_mode='kaiming_in'
 #export init_mode='xavier_torch'
 export grid_mode='default'
 #export grid_mode='xavier'
 #export grid_mode='xavier_10'
-export grid_mode='xavier_x'
+#export grid_mode='xavier_x'
 export grid_bound=2.0
 #export grid_mode='xavier'
 #export grid_mode='xavier_10'
-#export learning_rate=1.0
-export learning_rate=0.001
+export learning_rate=1.0
+#export learning_rate=0.001
+export lamb=0.0
+#export lamb=1.0
+#export lamb=0.5
+#export lamb=0.1
+#export lamb=0.01
+#export lamb=0.00001
+export lamb_l1=1.0
+export lamb_entropy=2.0
+#export lamb_entropy=10.0
+#export lamb_entropy=0.0
+export lamb_coef=0.0
+export lamb_coefdiff=0.0
+export optimizer='LBFGS' # Adam LBFGS
+#export optimizer='Adam'
+
 # Trainable On
 export base_fun='silu'
 export sp_trainable=true
@@ -38,19 +56,21 @@ export sb_trainable=true
 export affine_trainable=true
 export update_grid=true
 # Trainable Off
-#export base_fun='zero'
-#export sp_trainable=false
-#export sb_trainable=false
-#export affine_trainable=false
-#export update_grid=false
+# export base_fun='zero'
+# export sp_trainable=false
+# export sb_trainable=false
+# export affine_trainable=false
+# export update_grid=false
 # Dataset
-export dataset='random'
+#export dataset='make_classification'
+#export dataset='random'
 #export dataset='moon'
 #export dataset='mnist'
 #export dataset='cifar10'
+export dataset='mnist1d'
 export moon_noise_level=0.5
 export random_distribution='uniform'
-export random_input_dim=50
+export random_input_dim=5
 export random_output_dim=2
 export random_uniform_range_min=-1
 export random_uniform_range_max=1
@@ -82,6 +102,12 @@ python src/trainer.py \
     --grid_mode $grid_mode \
     --grid_bound $grid_bound \
     --learning_rate $learning_rate \
+    --lamb $lamb \
+    --lamb_l1 $lamb_l1 \
+    --lamb_entropy $lamb_entropy \
+    --lamb_coef $lamb_coef \
+    --lamb_coefdiff $lamb_coefdiff \
+    --optimizer $optimizer \
     --sp_trainable $sp_trainable \
     --sb_trainable $sb_trainable \
     --affine_trainable $affine_trainable \

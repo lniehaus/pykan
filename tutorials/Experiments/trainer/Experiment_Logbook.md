@@ -517,6 +517,24 @@ using "grid: default" results in a situation with the classifier probes,
 where only the last layer 5 (100%) learns something
 using "grid: xavier_2" shows that layer 4 (90%) and 5 (100%) learned something
 
+# xavier_in, xavier_2 conclusion
+init: xavier_in allows for a faster converging and uses more than the last layer to store information
+grid: xavier_2 allows to learn in more layers than just the last one and also slightly faster converging
+
+# grid knots and order
+There might be an error when changing the number of grid knots and the order
+grid knots: 5 -> 20
+order k: 3 -> 5
+the train accuracy changes from 100% to 80%
+5, 3
+http://127.0.0.1:5020/#/experiments/328105937783879903/runs/429d09198e544db68c5a3df4e8c2a1f7/artifacts
+20, 5
+http://127.0.0.1:5020/#/experiments/328105937783879903/runs/e00470855ffa49c99f6b6ee3bd355508/artifacts
+When looking at the coef at initialization the tails are super long.
+Do I have an error in the initialization function that does not properly scale with the knot size?
+
+
+
 # ToDo:
 - save metric for max accuracy -> check
 - make horizontal lines for the grid_range of each layer into the summed up violin plots -> check
