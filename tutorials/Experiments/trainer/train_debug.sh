@@ -1,20 +1,20 @@
 #!/bin/bash
 
 # Utility
-export experiment_name="train-debug-3"
+export experiment_name="train-debug-4"
 export device_index=1
 export seed=0
 # Model
 export hidden_form='square'
 export hidden_form='linear'
 export hidden_form='kat'
-export hidden_width=5
+export hidden_width=3
 #export hidden_depth=1
-#export hidden_depth=10
-export hidden_depth=13
-export steps=1000
+export hidden_depth=10
+#export hidden_depth=5
+export steps=100
 export grid=5
-#export grid=40
+#export grid=3
 export k=3
 #export k=5
 export mode='default'
@@ -39,7 +39,7 @@ export lamb=0.0
 #export lamb=0.5
 #export lamb=0.1
 #export lamb=0.01
-#export lamb=0.00001
+#export lamb=0.00005
 export lamb_l1=1.0
 export lamb_entropy=2.0
 #export lamb_entropy=10.0

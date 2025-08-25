@@ -294,3 +294,36 @@ def plot_summed_violins(model, title, mode="act", sample_size=100):
     # Show plot
     #plt.show()
     return plt.gcf()
+
+def plot_layerwise_postacts_and_postsplines(model, title, sample_size=100):
+    """
+    Plots a violin plot for each layer, showing both spline_postacts and spline_postsplines as separate violins.
+    """
+    data = []
+    for layer_index, (postacts, postsplines) in enumerate(zip(model.spline_postacts, model.spline_postsplines)):
+        # Flatten and sample postacts
+        postacts_np = postacts.cpu().detach().numpy().flatten()
+        if len(postacts_np) > sample_size:
+            sampled_postacts = np.random.choice(postacts_np, sample_size, replace=False)
+        else:
+            sampled_postacts = postacts_np
+        data.extend([(layer_index, act, 'postacts') for act in sampled_postacts])
+
+        # Flatten and sample postsplines
+        postsplines_np = postsplines.cpu().detach().numpy().flatten()
+        if len(postsplines_np) > sample_size:
+            sampled_postsplines = np.random.choice(postsplines_np, sample_size, replace=False)
+        else:
+            sampled_postsplines = postsplines_np
+        data.extend([(layer_index, act, 'postsplines') for act in sampled_postsplines])
+
+    # Create DataFrame
+    df = pd.DataFrame(data, columns=['Layer', 'Activation', 'Type'])
+
+    plt.figure(figsize=(12, 6))
+    sns.violinplot(data=df, x="Layer", y="Activation", hue="Type", split=True, inner="quart", palette={"postacts": "skyblue", "postsplines": "orange"})
+    plt.title(title)
+    plt.xlabel('Layer')
+    plt.ylabel('Activation')
+    plt.tight_layout()
+    return plt.gcf()
