@@ -227,6 +227,12 @@ class KANLayer(nn.Module):
      
         # CHANGED
         #x = torch.tanh(x)
+
+        # if self.mode=='default':
+        #     pass
+        # else:
+        #     x = torch.tanh(x)
+        #     pass
      
         batch = x.shape[0]
         preacts = x[:,None,:].clone().expand(batch, self.out_dim, self.in_dim)
@@ -234,11 +240,11 @@ class KANLayer(nn.Module):
      
         base = self.base_fun(x) # (batch, in_dim)
 
-        y = coef2curve(x_eval=x, grid=self.grid, coef=self.coef, k=self.k)
-        # if self.mode == 'default':
-        #     y = coef2curve(x_eval=x, grid=self.grid, coef=self.coef, k=self.k)
-        # else:
-        #     y = coef2curve_monotonic(x_eval=x, grid=self.grid, coef=self.coef, k=self.k, mode=self.mode)
+        #y = coef2curve(x_eval=x, grid=self.grid, coef=self.coef, k=self.k)
+        if self.mode == 'default':
+            y = coef2curve(x_eval=x, grid=self.grid, coef=self.coef, k=self.k)
+        else:
+            y = coef2curve_monotonic(x_eval=x, grid=self.grid, coef=self.coef, k=self.k, mode=self.mode)
         
         postspline = y.clone().permute(0,2,1)
         
@@ -275,11 +281,11 @@ class KANLayer(nn.Module):
         batch = x.shape[0]
         #x = torch.einsum('ij,k->ikj', x, torch.ones(self.out_dim, ).to(self.device)).reshape(batch, self.size).permute(1, 0)
         x_pos = torch.sort(x, dim=0)[0]
-        y_eval = coef2curve(x_pos, self.grid, self.coef, self.k)
-        # if self.mode == 'default':
-        #     y_eval = coef2curve(x_eval=x, grid=self.grid, coef=self.coef, k=self.k)
-        # else:
-        #     y_eval = coef2curve_monotonic(x_eval=x, grid=self.grid, coef=self.coef, k=self.k, mode=self.mode)
+        #y_eval = coef2curve(x_pos, self.grid, self.coef, self.k)
+        if self.mode == 'default':
+            y_eval = coef2curve(x_eval=x, grid=self.grid, coef=self.coef, k=self.k)
+        else:
+            y_eval = coef2curve_monotonic(x_eval=x, grid=self.grid, coef=self.coef, k=self.k, mode=self.mode)
         
         num_interval = self.grid.shape[1] - 1 - 2*self.k
         
@@ -298,11 +304,11 @@ class KANLayer(nn.Module):
         if mode == 'grid':
             sample_grid = get_grid(2*num_interval)
             x_pos = sample_grid.permute(1,0)
-            y_eval = coef2curve(x_pos, self.grid, self.coef, self.k)
-            # if self.mode == 'default':
-            #     y_eval = coef2curve(x_eval=x, grid=self.grid, coef=self.coef, k=self.k)
-            # else:
-            #     y_eval = coef2curve_monotonic(x_eval=x, grid=self.grid, coef=self.coef, k=self.k, mode=self.mode)
+            #y_eval = coef2curve(x_pos, self.grid, self.coef, self.k)
+            if self.mode == 'default':
+                y_eval = coef2curve(x_eval=x, grid=self.grid, coef=self.coef, k=self.k)
+            else:
+                y_eval = coef2curve_monotonic(x_eval=x, grid=self.grid, coef=self.coef, k=self.k, mode=self.mode)
         
         self.grid.data = extend_grid(grid, k_extend=self.k)
         #print('x_pos 2', x_pos.shape)
@@ -339,11 +345,11 @@ class KANLayer(nn.Module):
         
         # shrink grid
         x_pos = torch.sort(x, dim=0)[0]
-        y_eval = coef2curve(x_pos, parent.grid, parent.coef, parent.k)
-        # if self.mode == 'default':
-        #     y_eval = coef2curve(x_pos, parent.grid, parent.coef, parent.k)
-        # else:
-        #     y_eval = coef2curve_monotonic(x_pos, parent.grid, parent.coef, parent.k, mode=self.mode)
+        #y_eval = coef2curve(x_pos, parent.grid, parent.coef, parent.k)
+        if self.mode == 'default':
+            y_eval = coef2curve(x_pos, parent.grid, parent.coef, parent.k)
+        else:
+            y_eval = coef2curve_monotonic(x_pos, parent.grid, parent.coef, parent.k, mode=self.mode)
         num_interval = self.grid.shape[1] - 1 - 2*self.k
         
         
@@ -382,11 +388,11 @@ class KANLayer(nn.Module):
         if mode == 'grid':
             sample_grid = get_grid(2*num_interval)
             x_pos = sample_grid.permute(1,0)
-            y_eval = coef2curve(x_pos, parent.grid, parent.coef, parent.k)
-            # if self.mode == 'default':
-            #     y_eval = coef2curve(x_pos, parent.grid, parent.coef, parent.k)
-            # else:
-            #     y_eval = coef2curve_monotonic(x_pos, parent.grid, parent.coef, parent.k, mode=self.mode)
+            #y_eval = coef2curve(x_pos, parent.grid, parent.coef, parent.k)
+            if self.mode == 'default':
+                y_eval = coef2curve(x_pos, parent.grid, parent.coef, parent.k)
+            else:
+                y_eval = coef2curve_monotonic(x_pos, parent.grid, parent.coef, parent.k, mode=self.mode)
         
         grid = extend_grid(grid, k_extend=self.k)
         self.grid.data = grid

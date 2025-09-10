@@ -6,7 +6,7 @@ import numpy as np
 import mlflow
 import mlflow.pytorch
 from datasets import random_data, moon_data, mnist_data, cifar10_data, make_classification_data, mnist1d_data, boxes_2d_dataset
-from plotter import plot_train_data, plot_predictions, plot_violins, plot_violins_extended, plot_summed_violins, plot_mean_std, plot_layerwise_postacts_and_postsplines
+from plotter import plot_train_data, plot_predictions, plot_violins, plot_violins_extended, plot_summed_violins, plot_mean_std, plot_layerwise_postacts_and_postsplines, generate_grid_tensor, plot_decision_boundary, plot_classifier_probes
 from video import create_video
 
 # SYMBOLIC FORMULA
@@ -90,7 +90,7 @@ def parse_args():
     parser.add_argument('--random_normal_std', type=float, default=1, help='Random Normal Distribution Dataset std')
     parser.add_argument('--mnist1d_subset_size', type=int, default=100_000, help='Subset size for the mnist1d dataset') 
     parser.add_argument('--boxes_n_classes', type=int, default=4, help='Number of classes for the boxes 2d dataset')
-    parser.add_argument('--boxes_datapoints_per_class', type=int, default=250, help='Number of datapoints per class for the boxes 2d dataset')
+    parser.add_argument('--boxes_datapoints_per_class', type=int, default=10, help='Number of datapoints per class for the boxes 2d dataset')
 
 
     # Eval & Plots
@@ -451,62 +451,92 @@ def main():
         mlflow.log_metric("train_acc_formula", train_acc_formula)
         mlflow.log_metric("test_acc_formula", test_acc_formula)
 
+    # # # Train Accuracy Classifier Probe
+    # # model(dataset['train_input'])
+    # # targets = dataset['train_label'].cpu().detach().numpy()
+    # # for i, postacts in enumerate(model.spline_postacts):
+    # #     postacts_np = postacts.cpu().detach().numpy()
+    # #     postacts_np = postacts_np.reshape(postacts_np.shape[0], -1)
+    # #     #print("data shape",postacts_np.shape)
+    # #     classifier = SGDClassifier(penalty=None, loss="log_loss", learning_rate="constant", eta0=0.01)
+    # #     classifier.fit(postacts_np, targets)
+    # #     score = classifier.score(postacts_np, targets)
+    # #     name = f"classifier_probe_train_accuracy"
+    # #     print("Train Classifier Probe", name, i, score)
+    # #     mlflow.log_metric(name, score, step=i)
+
     # # Train Accuracy Classifier Probe
     # model(dataset['train_input'])
     # targets = dataset['train_label'].cpu().detach().numpy()
-    # for i, postacts in enumerate(model.spline_postacts):
-    #     postacts_np = postacts.cpu().detach().numpy()
-    #     postacts_np = postacts_np.reshape(postacts_np.shape[0], -1)
+    # for i, preacts in enumerate(model.spline_preacts):
+    #     preacts_np = preacts.cpu().detach().numpy()
+    #     preacts_np = preacts_np.reshape(preacts_np.shape[0], -1)
     #     #print("data shape",postacts_np.shape)
     #     classifier = SGDClassifier(penalty=None, loss="log_loss", learning_rate="constant", eta0=0.01)
-    #     classifier.fit(postacts_np, targets)
-    #     score = classifier.score(postacts_np, targets)
+    #     classifier.fit(preacts_np, targets)
+    #     score = classifier.score(preacts_np, targets)
     #     name = f"classifier_probe_train_accuracy"
     #     print("Train Classifier Probe", name, i, score)
     #     mlflow.log_metric(name, score, step=i)
 
-    # Train Accuracy Classifier Probe
-    model(dataset['train_input'])
-    targets = dataset['train_label'].cpu().detach().numpy()
-    for i, preacts in enumerate(model.spline_preacts):
-        preacts_np = preacts.cpu().detach().numpy()
-        preacts_np = preacts_np.reshape(preacts_np.shape[0], -1)
-        #print("data shape",postacts_np.shape)
-        classifier = SGDClassifier(penalty=None, loss="log_loss", learning_rate="constant", eta0=0.01)
-        classifier.fit(preacts_np, targets)
-        score = classifier.score(preacts_np, targets)
-        name = f"classifier_probe_train_accuracy"
-        print("Train Classifier Probe", name, i, score)
-        mlflow.log_metric(name, score, step=i)
 
+    # # # Test Accuracy Classifier Probe
+    # # model(dataset['test_input'])
+    # # targets = dataset['test_label'].cpu().detach().numpy()
+    # # for i, postacts in enumerate(model.spline_postacts):
+    # #     postacts_np = postacts.cpu().detach().numpy()
+    # #     postacts_np = postacts_np.reshape(postacts_np.shape[0], -1)
+    # #     #print("data shape",postacts_np.shape)
+    # #     classifier = SGDClassifier(penalty=None, loss="log_loss", learning_rate="constant", eta0=0.01)
+    # #     classifier.fit(postacts_np, targets)
+    # #     score = classifier.score(postacts_np, targets)
+    # #     name = f"classifier_probe_test_accuracy"
+    # #     print("Test Classifier Probe", name, i, score)
+    # #     mlflow.log_metric(name, score, step=i)
 
     # # Test Accuracy Classifier Probe
     # model(dataset['test_input'])
     # targets = dataset['test_label'].cpu().detach().numpy()
-    # for i, postacts in enumerate(model.spline_postacts):
-    #     postacts_np = postacts.cpu().detach().numpy()
-    #     postacts_np = postacts_np.reshape(postacts_np.shape[0], -1)
+    # for i, preacts in enumerate(model.spline_preacts):
+    #     preacts_np = preacts.cpu().detach().numpy()
+    #     preacts_np = preacts_np.reshape(preacts_np.shape[0], -1)
     #     #print("data shape",postacts_np.shape)
     #     classifier = SGDClassifier(penalty=None, loss="log_loss", learning_rate="constant", eta0=0.01)
-    #     classifier.fit(postacts_np, targets)
-    #     score = classifier.score(postacts_np, targets)
+    #     classifier.fit(preacts_np, targets)
+    #     score = classifier.score(preacts_np, targets)
     #     name = f"classifier_probe_test_accuracy"
     #     print("Test Classifier Probe", name, i, score)
     #     mlflow.log_metric(name, score, step=i)
 
-    # Test Accuracy Classifier Probe
-    model(dataset['test_input'])
-    targets = dataset['test_label'].cpu().detach().numpy()
-    for i, preacts in enumerate(model.spline_preacts):
-        preacts_np = preacts.cpu().detach().numpy()
-        preacts_np = preacts_np.reshape(preacts_np.shape[0], -1)
-        #print("data shape",postacts_np.shape)
-        classifier = SGDClassifier(penalty=None, loss="log_loss", learning_rate="constant", eta0=0.01)
-        classifier.fit(preacts_np, targets)
-        score = classifier.score(preacts_np, targets)
-        name = f"classifier_probe_test_accuracy"
-        print("Test Classifier Probe", name, i, score)
-        mlflow.log_metric(name, score, step=i)
+
+    if args.dataset == 'boxes_2d':
+        grid_tensor, xx, yy = generate_grid_tensor(bounds=(-1, 1, -1, 1), resolution=1000, device=device, dtype=torch.FloatTensor)
+
+        fig = plot_decision_boundary(
+            model=model,
+            dataset=dataset,
+            grid_tensor=grid_tensor,
+            xx=xx,
+            yy=yy,
+            title=f"Decision Boundary - Train Acc: {max(results['train_acc']):.2f}, Width: {args.hidden_width}, Init Mode: {args.init_mode}"
+        )
+        mlflow.log_figure(fig, "decision_boundary.png")
+
+    fig = plot_classifier_probes(
+        model, 
+        dataset_input=dataset['train_input'], 
+        dataset_label=dataset['train_label'], 
+        title="Train Classifier Probes"
+    )
+    mlflow.log_figure(fig, "classifier_probes_train.png")
+
+    fig = plot_classifier_probes(
+        model, 
+        dataset_input=dataset['test_input'], 
+        dataset_label=dataset['test_label'], 
+        title="Test Classifier Probes"
+    )
+    mlflow.log_figure(fig, "classifier_probes_test.png")
 
     mlflow.end_run()
     

@@ -86,6 +86,9 @@ def coef2curve_monotonic(x_eval, grid, coef, k, device="cpu", mode=None):
     elif mode == "relu":
         coef = torch.relu(coef)
         coef = torch.cumsum(coef, dim=2)
+    elif mode == "softplus":
+        coef = torch.softplus(coef)
+        coef = torch.cumsum(coef, dim=2)
 
     #coef = torch.nn.ReLU()(coef)
     #coef = torch.abs(coef)
@@ -96,7 +99,7 @@ def coef2curve_monotonic(x_eval, grid, coef, k, device="cpu", mode=None):
     #print("coef relu cumsum", coef)
     #coef = torch.sigmoid(coef)
 
-    b_splines = B_batch(x_eval, grid, k=k)
+    b_splines = B_batch(x_eval, grid, k=k, device=device)
     y_eval = torch.einsum('ijk,jlk->ijl', b_splines, coef.to(b_splines.device))
     
     return y_eval

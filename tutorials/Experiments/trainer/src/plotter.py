@@ -3,6 +3,7 @@ import numpy as np
 import pandas as pd
 import seaborn as sns
 import matplotlib.pyplot as plt
+from sklearn.linear_model import SGDClassifier
 
 def plot_train_data(dataset, title):
     X = dataset['train_input']
@@ -93,10 +94,10 @@ def plot_mean_std(model, title):
     for layer_index, (act_fun, preacts, postacts, postsplines) in enumerate(zip(model.act_fun, model.spline_preacts, model.spline_postacts, model.spline_postsplines)):
         coef = act_fun.coef
         with torch.no_grad():
-            act_means.append(postacts.mean().cpu().numpy())
-            act_stds.append(postacts.std().cpu().numpy())
+            act_means.append(preacts.mean().cpu().numpy())
+            act_stds.append(preacts.std().cpu().numpy())
 
-            act_summed = postacts.sum(axis=2, keepdims=True)
+            act_summed = preacts.sum(axis=2, keepdims=True)
             act_summed_means.append(act_summed.mean().cpu().numpy())
             act_summed_stds.append(act_summed.std().cpu().numpy())
 
@@ -150,7 +151,7 @@ def plot_violins(model, title, mode="act", sample_size=100):
         if mode == "coef":
             dist_np = coef.cpu().detach().numpy()
         elif mode == "act":
-            dist_np = postacts.cpu().detach().numpy()
+            dist_np = preacts.cpu().detach().numpy()
         elif mode == "grad":
             dist_np = coef.grad.cpu().detach().numpy()
 
@@ -190,7 +191,7 @@ def plot_violins_extended(model, dataset, title, sample_size=100):
 
     # Collect activations and labels
     for layer_index, (act_fun, acts, preacts, postacts, postsplines) in enumerate(zip(model.act_fun, model.acts, model.spline_preacts, model.spline_postacts, model.spline_postsplines)):
-        acts_np = torch.flatten(postacts).cpu().numpy()
+        acts_np = torch.flatten(preacts).cpu().numpy()
         
         # Sample a subset of activations if there are more than sample_size
         if len(acts_np) > sample_size:
@@ -355,4 +356,33 @@ def plot_decision_boundary(model, dataset, grid_tensor, xx, yy, title="Decision 
     plt.ylabel('y')
     plt.legend()
     plt.tight_layout()
-    plt.show()
+    #plt.show()
+    return plt.gcf()
+
+def plot_classifier_probes(model, dataset_input, dataset_label, title="Classifier Probes"):
+    #import matplotlib.pyplot as plt
+
+    model.eval()
+    model(dataset_input)
+    targets = dataset_label.cpu().detach().numpy()
+
+    probe_scores = []
+    layer_indices = []
+
+    for i, preacts in enumerate(model.spline_preacts):
+        preacts_np = preacts.cpu().detach().numpy()
+        preacts_np = preacts_np.reshape(preacts_np.shape[0], -1)
+        classifier = SGDClassifier(penalty=None, loss="log_loss", learning_rate="constant", eta0=0.01)
+        classifier.fit(preacts_np, targets)
+        score = classifier.score(preacts_np, targets)
+        probe_scores.append(score)
+        layer_indices.append(i)
+
+    fig, ax = plt.subplots(figsize=(8, 4))
+    ax.plot(layer_indices, probe_scores, marker='o')
+    ax.set_title(title)
+    ax.set_xlabel('Layer Index')
+    ax.set_ylabel('Probe Test Accuracy')
+    ax.grid(True)
+    plt.tight_layout()
+    return fig
