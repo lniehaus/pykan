@@ -327,3 +327,32 @@ def plot_layerwise_postacts_and_postsplines(model, title, sample_size=100):
     plt.ylabel('Activation')
     plt.tight_layout()
     return plt.gcf()
+
+def generate_grid_tensor(bounds=(-1, 1, -1, 1), resolution=1000, device='cpu', dtype=torch.FloatTensor):
+    xx, yy = np.meshgrid(
+        np.linspace(bounds[0] - 0.1, bounds[1] + 0.1, resolution),
+        np.linspace(bounds[2] - 0.1, bounds[3] + 0.1, resolution)
+    )
+    grid = np.c_[xx.ravel(), yy.ravel()]
+    grid_tensor = torch.from_numpy(grid).type(dtype).to(device)
+    return grid_tensor, xx, yy
+
+def plot_decision_boundary(model, dataset, grid_tensor, xx, yy, title="Decision Boundary"):
+    model.eval()
+    with torch.no_grad():
+        pred = model(grid_tensor).argmax(dim=1).cpu().numpy().reshape(xx.shape)
+
+    n_classes = dataset['train_label'].max().item() + 1  # Assuming labels are 0-indexed
+
+    plt.figure(figsize=(6, 6))
+    plt.contourf(xx, yy, pred, alpha=0.3, levels=n_classes-1, cmap='tab20')
+    plt.scatter(dataset['train_input'][:, 0].cpu(), dataset['train_input'][:, 1].cpu(), 
+                c=dataset['train_label'].cpu(), cmap='tab20', edgecolor='k', s=80, marker='o', label='Train Data (o)')
+    plt.scatter(dataset['test_input'][:, 0].cpu(), dataset['test_input'][:, 1].cpu(), 
+                c=dataset['test_label'].cpu(), cmap='tab20', edgecolor='k', s=80, marker='v', label='Test Data (v)')
+    plt.title(title)
+    plt.xlabel('x')
+    plt.ylabel('y')
+    plt.legend()
+    plt.tight_layout()
+    plt.show()

@@ -368,3 +368,43 @@ def mnist1d_data(device="cpu", seed=0, subset_size=1_000_000):
     dataset['test_label'] = torch.from_numpy(test_labels).type(torch.long).to(device)
 
     return dataset
+
+
+def boxes_2d_dataset(n_classes=32, datapoints_per_class=10, bounds=(-1, 1, -1, 1), device="cpu", seed=42):
+    dtype = torch.get_default_dtype()
+    np.random.seed(seed)
+    # Compute grid size (try to make it as square as possible)
+    grid_size = int(np.ceil(np.sqrt(n_classes)))
+    x_edges = np.linspace(bounds[0], bounds[1], grid_size + 1)
+    y_edges = np.linspace(bounds[2], bounds[3], grid_size + 1)
+    data = []
+    labels = []
+    class_idx = 0
+    for i in range(grid_size):
+        for j in range(grid_size):
+            if class_idx >= n_classes:
+                break
+            x_min, x_max = x_edges[i], x_edges[i+1]
+            y_min, y_max = y_edges[j], y_edges[j+1]
+            # Sample m points uniformly within this cell
+            xs = np.random.uniform(x_min, x_max, size=(datapoints_per_class, 1))
+            ys = np.random.uniform(y_min, y_max, size=(datapoints_per_class, 1))
+            points = np.hstack([xs, ys])
+            data.append(points)
+            labels.extend([class_idx] * datapoints_per_class)
+            class_idx += 1
+        if class_idx >= n_classes:
+            break
+    data = np.vstack(data)
+    labels = np.array(labels)
+
+    train_input, test_input, train_label, test_label = train_test_split(
+        data, labels, test_size=0.2, random_state=42, stratify=labels
+    )
+
+    dataset = {}
+    dataset['train_input'] = torch.from_numpy(train_input).type(dtype).to(device)
+    dataset['test_input'] = torch.from_numpy(test_input).type(dtype).to(device)
+    dataset['train_label'] = torch.from_numpy(train_label).type(torch.long).to(device)
+    dataset['test_label'] = torch.from_numpy(test_label).type(torch.long).to(device)
+    return dataset

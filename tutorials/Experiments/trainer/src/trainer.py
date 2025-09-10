@@ -5,7 +5,7 @@ import torch
 import numpy as np
 import mlflow
 import mlflow.pytorch
-from datasets import random_data, moon_data, mnist_data, cifar10_data, make_classification_data, mnist1d_data
+from datasets import random_data, moon_data, mnist_data, cifar10_data, make_classification_data, mnist1d_data, boxes_2d_dataset
 from plotter import plot_train_data, plot_predictions, plot_violins, plot_violins_extended, plot_summed_violins, plot_mean_std, plot_layerwise_postacts_and_postsplines
 from video import create_video
 
@@ -79,7 +79,7 @@ def parse_args():
     parser.add_argument('--update_grid', type=str2bool, default=False, help='Whether to update the grid during training')
 
     # Dataset
-    parser.add_argument('--dataset', type=str, choices=['random', 'moon', 'mnist', 'cifar10', 'make_classification', 'mnist1d'], default='random', help='Select Dataset')
+    parser.add_argument('--dataset', type=str, choices=['random', 'moon', 'mnist', 'cifar10', 'make_classification', 'mnist1d', 'boxes_2d'], default='random', help='Select Dataset')
     parser.add_argument('--moon_noise_level', type=float, default=0, help='Adjust the noise for the moon dataset in the KAN')
     parser.add_argument('--random_distribution', type=str, choices=['uniform', 'normal'], default='random', help='Random Distribution')
     parser.add_argument('--random_input_dim', type=int, default=2, help='random Dataset Input Dimension')
@@ -88,6 +88,10 @@ def parse_args():
     parser.add_argument('--random_uniform_range_max', type=float, default=1, help='Random Uniform Dataset range max')
     parser.add_argument('--random_normal_mean', type=float, default=0, help='Random Normal Distribution Dataset mean')
     parser.add_argument('--random_normal_std', type=float, default=1, help='Random Normal Distribution Dataset std')
+    parser.add_argument('--mnist1d_subset_size', type=int, default=100_000, help='Subset size for the mnist1d dataset') 
+    parser.add_argument('--boxes_n_classes', type=int, default=4, help='Number of classes for the boxes 2d dataset')
+    parser.add_argument('--boxes_datapoints_per_class', type=int, default=250, help='Number of datapoints per class for the boxes 2d dataset')
+
 
     # Eval & Plots
     parser.add_argument('--symbolic_regression', type=str2bool, default=False, help='Activates the Symbolic Regression. Takes long for big models')
@@ -182,6 +186,15 @@ def main():
         dataset = mnist1d_data(device=device, seed=args.seed, subset_size=100_000)
         input_dim = 40
         output_dim = 10
+    elif args.dataset == "boxes_2d":
+        dataset = boxes_2d_dataset(
+            n_classes=args.boxes_n_classes,
+            datapoints_per_class=args.boxes_datapoints_per_class,
+            bounds=(args.random_uniform_range_min, args.random_uniform_range_max, args.random_uniform_range_min, args.random_uniform_range_max),
+            device=device
+        )
+        input_dim = 2
+        output_dim = args.boxes_n_classes
 
 
     video_folder=f"./figures/{args.experiment_name}/{run_id}/video"
