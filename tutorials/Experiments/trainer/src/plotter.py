@@ -322,7 +322,15 @@ def plot_layerwise_postacts_and_postsplines(model, title, sample_size=100):
     df = pd.DataFrame(data, columns=['Layer', 'Activation', 'Type'])
 
     plt.figure(figsize=(12, 6))
-    sns.violinplot(data=df, x="Layer", y="Activation", hue="Type", split=True, inner="quart", palette={"postacts": "skyblue", "postsplines": "orange"})
+    sns.violinplot(data=df, 
+                   x="Layer", 
+                   y="Activation", 
+                   hue="Type", 
+                   split=True, 
+                   inner="quart",
+                   gap=0.1, 
+                   palette={"postacts": "skyblue", "postsplines": "orange"}
+                   )
     plt.title(title)
     plt.xlabel('Layer')
     plt.ylabel('Activation')

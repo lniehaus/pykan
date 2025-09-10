@@ -307,7 +307,7 @@ def main():
     #if args.hidden_width < 10 and args.hidden_depth < 10 and args.random_input_dim < 10 and args.random_output_dim < 10:
     # Only plot small Networks
     if not any(element > 10 for sublist in width for element in sublist):
-        model.plot(folder=f"./figures/{args.experiment_name}/{run_id}_initialized", beta=100)
+        model.plot(scale=1.0, folder=f"./figures/{args.experiment_name}/{run_id}_initialized", beta=100)
         mlflow.log_figure(model.fig, "kan-splines-initialized.png")
 
     def train_acc():
@@ -417,7 +417,7 @@ def main():
     #if args.hidden_width < 10 and args.hidden_depth < 10 and args.random_input_dim < 10 and args.random_output_dim < 10:
     # Only plot small Networks
     if not any(element > 10 for sublist in width for element in sublist):
-        model.plot(folder=f"./figures/{args.experiment_name}/{run_id}_trained", beta=100)
+        model.plot(scale=1.0, folder=f"./figures/{args.experiment_name}/{run_id}_trained", beta=100)
         mlflow.log_figure(model.fig, "kan-splines-trained.png")
     
     fig = plot_predictions(
@@ -518,7 +518,7 @@ def main():
             grid_tensor=grid_tensor,
             xx=xx,
             yy=yy,
-            title=f"Decision Boundary - Train Acc: {max(results['train_acc']):.2f}, Width: {args.hidden_width}, Init Mode: {args.init_mode}"
+            title=f"Decision Boundary - Train Acc: {results['train_acc'][-1]:.2f}, Test Acc: {results['test_acc'][-1]:.2f}"
         )
         mlflow.log_figure(fig, "decision_boundary.png")
 

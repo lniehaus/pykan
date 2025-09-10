@@ -386,7 +386,7 @@ def boxes_2d_dataset(n_classes=32, datapoints_per_class=10, bounds=(-1, 1, -1, 1
                 break
             x_min, x_max = x_edges[i], x_edges[i+1]
             y_min, y_max = y_edges[j], y_edges[j+1]
-            # Sample m points uniformly within this cell
+            # Sample datapoints_per_class points uniformly within this cell
             xs = np.random.uniform(x_min, x_max, size=(datapoints_per_class, 1))
             ys = np.random.uniform(y_min, y_max, size=(datapoints_per_class, 1))
             points = np.hstack([xs, ys])

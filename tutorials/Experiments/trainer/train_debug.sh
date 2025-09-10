@@ -7,7 +7,7 @@ export seed=0
 # Model
 export hidden_form='square'
 export hidden_form='linear'
-export hidden_form='kat'
+#export hidden_form='kat'
 export hidden_width=3
 #export hidden_depth=1
 export hidden_depth=10
@@ -19,11 +19,12 @@ export k=3
 #export k=5
 export mode='default'
 export spline_noise_scale=0.3
+export init_mode='default'
 #export init_mode='default-0_1'
 #export init_mode='default-0_5'
 #export init_mode='xavier_in_out'
 #export init_mode='xavier_in' 
-export init_mode='kaiming_in'
+#export init_mode='kaiming_in'
 #export init_mode='xavier_torch'
 export grid_mode='default'
 #export grid_mode='xavier'
@@ -32,8 +33,9 @@ export grid_mode='default'
 export grid_bound=2.0
 #export grid_mode='xavier'
 #export grid_mode='xavier_10'
-export learning_rate=1.0
+#export learning_rate=1.0
 #export learning_rate=0.001
+export learning_rate=1e-3
 export lamb=0.0
 #export lamb=1.0
 #export lamb=0.5
@@ -46,8 +48,8 @@ export lamb_entropy=2.0
 #export lamb_entropy=0.0
 export lamb_coef=0.0
 export lamb_coefdiff=0.0
-export optimizer='LBFGS' # Adam LBFGS
-#export optimizer='Adam'
+#export optimizer='LBFGS' # Adam LBFGS
+export optimizer='Adam'
 
 # Trainable On
 export base_fun='silu'
@@ -67,7 +69,8 @@ export update_grid=true
 #export dataset='moon'
 #export dataset='mnist'
 #export dataset='cifar10'
-export dataset='mnist1d'
+#export dataset='mnist1d'
+export dataset='boxes_2d'
 export moon_noise_level=0.5
 export random_distribution='uniform'
 export random_input_dim=5
@@ -76,6 +79,8 @@ export random_uniform_range_min=-1
 export random_uniform_range_max=1
 export random_normal_mean=0
 export random_normal_std=1
+export boxes_n_classes=4
+export boxes_datapoints_per_class=10
 # Eval & Plots
 export symbolic_regression=false
 export plot_initialized_model=true
@@ -121,6 +126,8 @@ python src/trainer.py \
     --random_uniform_range_max $random_uniform_range_max \
     --random_normal_mean $random_normal_mean \
     --random_normal_std $random_normal_std \
+    --boxes_n_classes $boxes_n_classes \
+    --boxes_datapoints_per_class $boxes_datapoints_per_class \
     --symbolic_regression $symbolic_regression \
     --plot_initialized_model $plot_initialized_model \
     --plot_trained_model $plot_trained_model \
