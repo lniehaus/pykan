@@ -265,7 +265,7 @@ def mnist_data(device="cpu", seed=0):
 
     return dataset
 
-def cifar10_data(device="cpu", seed=0, subset_size=1_000, grayscale=False):
+def cifar10_data(device="cpu", seed=0, subset_size=100_000, grayscale=False):
     # Set the random seed for reproducibility
     torch.manual_seed(seed)
 
@@ -293,11 +293,11 @@ def cifar10_data(device="cpu", seed=0, subset_size=1_000, grayscale=False):
     test_label_subset = test_dataset.targets
 
     if subset_size <= len(train_dataset):
-        # Create a subset of the first 100 data points
+        # Create a subset of the first subset_size data points
         train_input_subset = torch.utils.data.Subset(train_dataset.data, range(subset_size))
-        #test_input_subset = torch.utils.data.Subset(test_dataset.data, range(subset_size))
-        #train_label_subset = torch.utils.data.Subset(train_dataset.targets, range(subset_size))
-        #test_label_subset = torch.utils.data.Subset(test_dataset.targets, range(subset_size))
+        train_label_subset = torch.utils.data.Subset(train_dataset.targets, range(subset_size))
+        test_input_subset = torch.utils.data.Subset(test_dataset.data, range(subset_size))
+        test_label_subset = torch.utils.data.Subset(test_dataset.targets, range(subset_size))
 
 
     # Convert to PyTorch tensors and move data to the specified device
@@ -417,4 +417,60 @@ def boxes_2d_dataset(n_classes=32, datapoints_per_class=10, bounds=(-1, 1, -1, 1
     dataset['test_input'] = torch.from_numpy(test_input).type(dtype).to(device)
     dataset['train_label'] = torch.from_numpy(train_label).type(torch.long).to(device)
     dataset['test_label'] = torch.from_numpy(test_label).type(torch.long).to(device)
+    return dataset
+
+def and_data(n_samples=1000, noise=0.0, seed=0, device="cpu"):
+    np.random.seed(seed)
+    # Generate all possible combinations for AND, OR, XOR
+    X = np.random.randint(0, 2, size=(n_samples * 2, 2))
+    y = np.logical_and(X[:, 0], X[:, 1]).astype(int)
+    if noise > 0:
+        flip = np.random.rand(len(y)) < noise
+        y[flip] = 1 - y[flip]
+    # Split into train and test sets (half-half, no overlap)
+    split = len(X) // 2
+    train_X, test_X = X[:split], X[split:]
+    train_y, test_y = y[:split], y[split:]
+    dtype = torch.get_default_dtype()
+    dataset = {}
+    dataset['train_input'] = torch.from_numpy(train_X).type(dtype).to(device)
+    dataset['test_input'] = torch.from_numpy(test_X).type(dtype).to(device)
+    dataset['train_label'] = torch.from_numpy(train_y).type(torch.long).to(device)
+    dataset['test_label'] = torch.from_numpy(test_y).type(torch.long).to(device)
+    return dataset
+
+def or_data(n_samples=1000, noise=0.0, seed=0, device="cpu"):
+    np.random.seed(seed)
+    X = np.random.randint(0, 2, size=(n_samples * 2, 2))
+    y = np.logical_or(X[:, 0], X[:, 1]).astype(int)
+    if noise > 0:
+        flip = np.random.rand(len(y)) < noise
+        y[flip] = 1 - y[flip]
+    split = len(X) // 2
+    train_X, test_X = X[:split], X[split:]
+    train_y, test_y = y[:split], y[split:]
+    dtype = torch.get_default_dtype()
+    dataset = {}
+    dataset['train_input'] = torch.from_numpy(train_X).type(dtype).to(device)
+    dataset['test_input'] = torch.from_numpy(test_X).type(dtype).to(device)
+    dataset['train_label'] = torch.from_numpy(train_y).type(torch.long).to(device)
+    dataset['test_label'] = torch.from_numpy(test_y).type(torch.long).to(device)
+    return dataset
+
+def xor_data(n_samples=1000, noise=0.0, seed=0, device="cpu"):
+    np.random.seed(seed)
+    X = np.random.randint(0, 2, size=(n_samples * 2, 2))
+    y = np.logical_xor(X[:, 0], X[:, 1]).astype(int)
+    if noise > 0:
+        flip = np.random.rand(len(y)) < noise
+        y[flip] = 1 - y[flip]
+    split = len(X) // 2
+    train_X, test_X = X[:split], X[split:]
+    train_y, test_y = y[:split], y[split:]
+    dtype = torch.get_default_dtype()
+    dataset = {}
+    dataset['train_input'] = torch.from_numpy(train_X).type(dtype).to(device)
+    dataset['test_input'] = torch.from_numpy(test_X).type(dtype).to(device)
+    dataset['train_label'] = torch.from_numpy(train_y).type(torch.long).to(device)
+    dataset['test_label'] = torch.from_numpy(test_y).type(torch.long).to(device)
     return dataset

@@ -12,7 +12,7 @@ export hidden_width=3
 #export hidden_depth=1
 export hidden_depth=10
 #export hidden_depth=5
-export steps=100
+export steps=1000
 export grid=5
 #export grid=3
 export k=3
@@ -64,13 +64,13 @@ export update_grid=true
 # export affine_trainable=false
 # export update_grid=false
 # Dataset
-#export dataset='make_classification'
 #export dataset='random'
-#export dataset='moon'
+export dataset='moon'
+#export dataset='make_classification'
 #export dataset='mnist'
 #export dataset='cifar10'
 #export dataset='mnist1d'
-export dataset='boxes_2d'
+#export dataset='boxes_2d'
 export moon_noise_level=0.5
 export random_distribution='uniform'
 export random_input_dim=5
@@ -131,4 +131,4 @@ python src/trainer.py \
     --symbolic_regression $symbolic_regression \
     --plot_initialized_model $plot_initialized_model \
     --plot_trained_model $plot_trained_model \
-    --save_video $save_video
+    --save_video $save_video \

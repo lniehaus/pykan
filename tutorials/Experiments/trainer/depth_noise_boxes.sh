@@ -3,7 +3,7 @@
 # Execution
 export JOB_NUM=10
 # Utility
-export experiment_name="depth_noise_boxes_04"
+export experiment_name="depth_noise_boxes_05"
 export device_index=1
 export seed=0
 # Model
@@ -58,7 +58,7 @@ export random_uniform_range_min=-1
 export random_uniform_range_max=1
 export random_normal_mean=0
 export random_normal_std=1
-export boxes_n_classes=32
+export boxes_n_classes=4
 export boxes_datapoints_per_class=10
 # Eval & Plots
 export symbolic_regression=false

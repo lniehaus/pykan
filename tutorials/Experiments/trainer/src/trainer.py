@@ -8,6 +8,7 @@ import mlflow.pytorch
 from datasets import random_data, moon_data, mnist_data, cifar10_data, make_classification_data, mnist1d_data, boxes_2d_dataset
 from plotter import plot_train_data, plot_predictions, plot_violins, plot_violins_extended, plot_summed_violins, plot_mean_std, plot_layerwise_postacts_and_postsplines, generate_grid_tensor, plot_decision_boundary, plot_classifier_probes
 from video import create_video
+from metrics import count_connected_regions, calc_boundary_length, calc_boundary_curvature, calc_fractal_dimension
 
 # SYMBOLIC FORMULA
 def symbolic_regression(model, dataset):
@@ -102,6 +103,9 @@ def parse_args():
 
     args = parser.parse_args()
     return args
+
+def count_parameters(model):
+    return sum(p.numel() for p in model.parameters() if p.requires_grad)
 
 def main():
 
@@ -248,10 +252,13 @@ def main():
             ckpt_path=ckpt_folder
             )
 
+    parameters = count_parameters(model)
+    mlflow.log_metric("parameters", parameters)
+
     model(dataset['train_input'])
 
     fig = plot_layerwise_postacts_and_postsplines(
-        model,
+        model=model,
         title=f"Layerwise Postacts & Postsplines - Width: {args.hidden_width}, Init Mode: {args.init_mode}"
     )
     mlflow.log_figure(fig, "layerwise_postacts_and_postsplines-initialized.png")
@@ -355,7 +362,7 @@ def main():
         mlflow.pytorch.log_model(model, "model")
 
     # classifier probes
-    from sklearn.linear_model import SGDClassifier
+    #from sklearn.linear_model import SGDClassifier
     model.eval()
 
     model(dataset['train_input'])
@@ -521,6 +528,21 @@ def main():
             title=f"Decision Boundary - Train Acc: {results['train_acc'][-1]:.2f}, Test Acc: {results['test_acc'][-1]:.2f}"
         )
         mlflow.log_figure(fig, "decision_boundary.png")
+
+        # Calculate Decision Boundary Metrics
+        model.eval()
+        with torch.no_grad():
+            pred = model(grid_tensor).argmax(dim=1).cpu().numpy().reshape(xx.shape)
+        connected_regions = count_connected_regions(pred)
+        boundary_length = calc_boundary_length(pred, xx, yy)
+        curvature = calc_boundary_curvature(pred, xx, yy)
+        fractal_dim = calc_fractal_dimension(pred)
+        print(f"Connected Regions: {connected_regions}, Boundary Length: {boundary_length}, Curvature: {curvature}, Fractal Dimension: {fractal_dim}")
+        mlflow.log_metric("connected_regions", connected_regions)
+        mlflow.log_metric("boundary_length", boundary_length)
+        mlflow.log_metric("curvature", curvature)
+        mlflow.log_metric("fractal_dimension", fractal_dim)
+
 
     fig = plot_classifier_probes(
         model, 
