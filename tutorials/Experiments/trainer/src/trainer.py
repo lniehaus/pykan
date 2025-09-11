@@ -509,7 +509,7 @@ def main():
     #     mlflow.log_metric(name, score, step=i)
 
 
-    if args.dataset == 'boxes_2d':
+    if args.dataset == 'boxes_2d' or args.dataset == 'moon' or args.random_input_dim == 2:
         grid_tensor, xx, yy = generate_grid_tensor(bounds=(-1, 1, -1, 1), resolution=1000, device=device, dtype=torch.FloatTensor)
 
         fig = plot_decision_boundary(
@@ -524,17 +524,17 @@ def main():
 
     fig = plot_classifier_probes(
         model, 
-        dataset_input=dataset['train_input'], 
-        dataset_label=dataset['train_label'], 
-        title="Train Classifier Probes"
+        dataset=dataset,
+        evalset='train',
+        title="Layerwise Classifier Probes Train evaluation"
     )
     mlflow.log_figure(fig, "classifier_probes_train.png")
 
     fig = plot_classifier_probes(
         model, 
-        dataset_input=dataset['test_input'], 
-        dataset_label=dataset['test_label'], 
-        title="Test Classifier Probes"
+        dataset=dataset,
+        evalset='test',
+        title="Layerwise Classifier Probes Test evaluation"
     )
     mlflow.log_figure(fig, "classifier_probes_test.png")
 

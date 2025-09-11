@@ -66,6 +66,16 @@ def moon_data(data_noise_level, n_samples=1000, seed=0, device="cpu"):
     train_input, train_label = make_moons(n_samples=n_samples, shuffle=True, noise=data_noise_level, random_state=seed)
     test_input, test_label = make_moons(n_samples=n_samples, shuffle=False, noise=data_noise_level, random_state=seed+1)
 
+    # Min-max scale both train and test to [-1, 1]
+    all_data = np.vstack([train_input, test_input])
+    min_vals = all_data.min(axis=0)
+    max_vals = all_data.max(axis=0)
+    scale = 2 / (max_vals - min_vals)
+    shift = -1 - min_vals * scale
+
+    train_input = train_input * scale + shift
+    test_input = test_input * scale + shift
+
     dtype = torch.get_default_dtype()
     dataset = {}
     dataset['train_input'] = torch.from_numpy(train_input).type(dtype).to(device)

@@ -367,21 +367,39 @@ def plot_decision_boundary(model, dataset, grid_tensor, xx, yy, title="Decision 
     #plt.show()
     return plt.gcf()
 
-def plot_classifier_probes(model, dataset_input, dataset_label, title="Classifier Probes"):
+def plot_classifier_probes(model, dataset, evalset='train', title="Classifier Probes"):
     #import matplotlib.pyplot as plt
 
+    train_input = dataset['train_input']
+    train_label = dataset['train_label']
+    test_input = dataset['test_input']
+    test_label = dataset['test_label']
+
     model.eval()
-    model(dataset_input)
-    targets = dataset_label.cpu().detach().numpy()
+    model(train_input)
+    targets = train_label.cpu().detach().numpy()
 
     probe_scores = []
     layer_indices = []
+    classifiers = []
 
     for i, preacts in enumerate(model.spline_preacts):
         preacts_np = preacts.cpu().detach().numpy()
         preacts_np = preacts_np.reshape(preacts_np.shape[0], -1)
         classifier = SGDClassifier(penalty=None, loss="log_loss", learning_rate="constant", eta0=0.01)
         classifier.fit(preacts_np, targets)
+        classifiers.append(classifier)
+        #score = classifier.score(preacts_np, targets)
+        #probe_scores.append(score)
+        #layer_indices.append(i)
+
+    if evalset == 'test':
+        model(test_input)
+        targets = test_label.cpu().detach().numpy()
+
+    for i, (preacts, classifier) in enumerate(zip(model.spline_preacts, classifiers)):
+        preacts_np = preacts.cpu().detach().numpy()
+        preacts_np = preacts_np.reshape(preacts_np.shape[0], -1)
         score = classifier.score(preacts_np, targets)
         probe_scores.append(score)
         layer_indices.append(i)
@@ -390,7 +408,7 @@ def plot_classifier_probes(model, dataset_input, dataset_label, title="Classifie
     ax.plot(layer_indices, probe_scores, marker='o')
     ax.set_title(title)
     ax.set_xlabel('Layer Index')
-    ax.set_ylabel('Probe Test Accuracy')
+    ax.set_ylabel('Probe Accuracy')
     ax.grid(True)
     plt.tight_layout()
     return fig
