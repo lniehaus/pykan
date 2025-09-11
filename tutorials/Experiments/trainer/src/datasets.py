@@ -380,7 +380,7 @@ def mnist1d_data(device="cpu", seed=0, subset_size=1_000_000):
     return dataset
 
 
-def boxes_2d_dataset(n_classes=32, datapoints_per_class=10, bounds=(-1, 1, -1, 1), device="cpu", seed=42):
+def boxes_2d_dataset(n_classes=16, datapoints_per_class=10, bounds=(-1, 1, -1, 1), device="cpu", seed=42):
     dtype = torch.get_default_dtype()
     np.random.seed(seed)
     # Compute grid size (try to make it as square as possible)

@@ -155,6 +155,7 @@ def main():
             )
         input_dim = args.random_input_dim
         output_dim = args.random_output_dim
+        output_classes = args.random_output_dim
     elif args.dataset == "moon":
         dataset = moon_data(
             data_noise_level=args.moon_noise_level, 
@@ -166,15 +167,18 @@ def main():
             )
         input_dim = 2
         output_dim = 2
+        output_classes = 2
     elif args.dataset == "mnist":
         dataset = mnist_data(device=device)
         input_dim = 784
         output_dim = 10
+        output_classes = 10
     elif args.dataset == "cifar10":
         dataset = cifar10_data(device=device, subset_size=100_000, grayscale=False)
         #input_dim = 1024 # grayscale
         input_dim = 3072 # rgb
         output_dim = 10
+        output_classes = 10
     elif args.dataset == "make_classification":
         dataset = make_classification_data(n_samples=1000, 
                                            n_features=args.random_input_dim, 
@@ -186,10 +190,12 @@ def main():
         #input_dim = 1024 # grayscale
         input_dim = args.random_input_dim # rgb
         output_dim = args.random_output_dim
+        output_classes = args.random_output_dim
     elif args.dataset == "mnist1d":
         dataset = mnist1d_data(device=device, seed=args.seed, subset_size=100_000)
         input_dim = 40
         output_dim = 10
+        output_classes = 10
     elif args.dataset == "boxes_2d":
         dataset = boxes_2d_dataset(
             n_classes=args.boxes_n_classes,
@@ -199,7 +205,29 @@ def main():
         )
         input_dim = 2
         output_dim = args.boxes_n_classes
+        output_classes = args.boxes_n_classes
 
+    ### Start: Adjust for regression task
+
+    task = "classification"
+    task = "regression"
+
+    loss_fn = torch.nn.CrossEntropyLoss()
+
+    if task == "regression":
+        print("regression task")
+        loss_fn = torch.nn.MSELoss()
+        output_dim = 1
+        # Convert classification labels to regression targets between 0 and 1
+        for split in ['train_label', 'test_label']:
+            labels = dataset[split].float()
+            min_label = labels.min()
+            max_label = labels.max()
+            # Normalize to [0, 1]
+            dataset[split] = (labels - min_label) / (max_label - min_label)
+            dataset[split] = dataset[split].unsqueeze(1)
+
+    ### End: Adjust for regression task
 
     video_folder=f"./figures/{args.experiment_name}/{run_id}/video"
     ckpt_folder=f"./model/{args.experiment_name}/{run_id}"
@@ -318,10 +346,31 @@ def main():
         mlflow.log_figure(model.fig, "kan-splines-initialized.png")
 
     def train_acc():
-        return torch.mean((torch.argmax(model(dataset['train_input']), dim=1) == dataset['train_label']).float())
+        if task == "classification":
+            return torch.mean((torch.argmax(model(dataset['train_input']), dim=1) == dataset['train_label']).float())
+        elif task == "regression":
+            # dtype = torch.get_default_dtype()
+            # this only works for 2 classes
+            # return torch.mean((torch.round(model(dataset['train_input'])[:,0]) == dataset['train_label'][:,0]).type(dtype))
+            n_classes = output_classes
+            preds = torch.round(model(dataset['train_input'])[:, 0] * (n_classes - 1)).long()
+            targets = torch.round(dataset['train_label'][:, 0] * (n_classes - 1)).long()
+            return torch.mean((preds == targets).float())
+
 
     def test_acc():
-        return torch.mean((torch.argmax(model(dataset['test_input']), dim=1) == dataset['test_label']).float())
+        if task == "classification":
+            return torch.mean((torch.argmax(model(dataset['test_input']), dim=1) == dataset['test_label']).float())
+        elif task == "regression":
+            # dtype = torch.get_default_dtype()
+            # this only works for 2 classes
+            # return torch.mean((torch.round(model(dataset['test_input'])[:,0]) == dataset['test_label'][:,0]).type(dtype))
+            # Map regression output in [0, 1] to class indices for n classes
+            n_classes = output_classes
+            preds = torch.round(model(dataset['test_input'])[:, 0] * (n_classes - 1)).long()
+            targets = torch.round(dataset['test_label'][:, 0] * (n_classes - 1)).long()
+            return torch.mean((preds == targets).float())
+
 
     noises = np.array([0.001, 0.01, 0.1, 1, 10, 100, 1000])
     indices = np.where(noises == args.spline_noise_scale)[0]
@@ -339,7 +388,7 @@ def main():
                         update_grid=args.update_grid,
                         img_folder=video_folder,
                         save_fig=args.save_video,
-                        loss_fn=torch.nn.CrossEntropyLoss(),
+                        loss_fn=loss_fn,
                         lr=args.learning_rate,
                         lamb=args.lamb,
                         lamb_l1=args.lamb_l1,
@@ -519,20 +568,31 @@ def main():
     if args.dataset == 'boxes_2d' or args.dataset == 'moon' or args.random_input_dim == 2:
         grid_tensor, xx, yy = generate_grid_tensor(bounds=(-1, 1, -1, 1), resolution=1000, device=device, dtype=torch.FloatTensor)
 
+        # Calculate Decision Boundary Metrics
+        model.eval()
+        with torch.no_grad():
+            if task == "classification":
+                pred = model(grid_tensor).argmax(dim=1).cpu().numpy().reshape(xx.shape)
+            elif task == "regression":
+                #pred = (model(grid_tensor).cpu().numpy().reshape(xx.shape) > 0.5).astype(int)
+                
+                # For n classes, map regression output in [0, 1] to class indices
+                n_classes = output_classes
+                output = model(grid_tensor).cpu().numpy().reshape(xx.shape)
+                # Clip to [0, 1] to avoid rounding errors outside the range
+                output = np.clip(output, 0, 1)
+                # Map to class indices: 0, 1, ..., n_classes-1
+                pred = np.round(output * (n_classes - 1)).astype(int)
+
         fig = plot_decision_boundary(
-            model=model,
+            pred = pred,
             dataset=dataset,
-            grid_tensor=grid_tensor,
             xx=xx,
             yy=yy,
             title=f"Decision Boundary - Train Acc: {results['train_acc'][-1]:.2f}, Test Acc: {results['test_acc'][-1]:.2f}"
         )
         mlflow.log_figure(fig, "decision_boundary.png")
 
-        # Calculate Decision Boundary Metrics
-        model.eval()
-        with torch.no_grad():
-            pred = model(grid_tensor).argmax(dim=1).cpu().numpy().reshape(xx.shape)
         connected_regions = count_connected_regions(pred)
         boundary_length = calc_boundary_length(pred, xx, yy)
         curvature = calc_boundary_curvature(pred, xx, yy)
@@ -543,19 +603,30 @@ def main():
         mlflow.log_metric("curvature", curvature)
         mlflow.log_metric("fractal_dimension", fractal_dim)
 
+    if task == "classification":
+        train_label = dataset['train_label']
+        test_label = dataset['test_label']
+    elif task == "regression":
+        n_classes = output_classes
+        train_label = torch.round(dataset['train_label'][:, 0] * (n_classes - 1)).long()
+        test_label = torch.round(dataset['test_label'][:, 0] * (n_classes - 1)).long()
 
     fig = plot_classifier_probes(
-        model, 
-        dataset=dataset,
-        evalset='train',
+        model=model, 
+        train_input=dataset['train_input'], 
+        train_label=train_label, 
+        test_input=None, 
+        test_label=None,
         title="Layerwise Classifier Probes Train evaluation"
     )
     mlflow.log_figure(fig, "classifier_probes_train.png")
 
     fig = plot_classifier_probes(
-        model, 
-        dataset=dataset,
-        evalset='test',
+        model=model, 
+        train_input=dataset['train_input'], 
+        train_label=train_label, 
+        test_input=dataset['test_input'],
+        test_label=test_label,
         title="Layerwise Classifier Probes Test evaluation"
     )
     mlflow.log_figure(fig, "classifier_probes_test.png")

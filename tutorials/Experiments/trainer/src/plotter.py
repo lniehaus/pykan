@@ -346,15 +346,10 @@ def generate_grid_tensor(bounds=(-1, 1, -1, 1), resolution=1000, device='cpu', d
     grid_tensor = torch.from_numpy(grid).type(dtype).to(device)
     return grid_tensor, xx, yy
 
-def plot_decision_boundary(model, dataset, grid_tensor, xx, yy, title="Decision Boundary"):
-    model.eval()
-    with torch.no_grad():
-        pred = model(grid_tensor).argmax(dim=1).cpu().numpy().reshape(xx.shape)
-
-    n_classes = dataset['train_label'].max().item() + 1  # Assuming labels are 0-indexed
-
+def plot_decision_boundary(pred, dataset, xx, yy, title="Decision Boundary"):
+    n_classes = len(torch.unique(dataset['train_label']))
     plt.figure(figsize=(6, 6))
-    plt.contourf(xx, yy, pred, alpha=0.3, levels=n_classes-1, cmap='tab20')
+    plt.contourf(xx, yy, pred, alpha=0.3, levels=n_classes, cmap='tab20')
     plt.scatter(dataset['train_input'][:, 0].cpu(), dataset['train_input'][:, 1].cpu(), 
                 c=dataset['train_label'].cpu(), cmap='tab20', edgecolor='k', s=80, marker='o', label='Train Data (o)')
     plt.scatter(dataset['test_input'][:, 0].cpu(), dataset['test_input'][:, 1].cpu(), 
@@ -367,13 +362,13 @@ def plot_decision_boundary(model, dataset, grid_tensor, xx, yy, title="Decision 
     #plt.show()
     return plt.gcf()
 
-def plot_classifier_probes(model, dataset, evalset='train', title="Classifier Probes"):
+def plot_classifier_probes(model, train_input, train_label, test_input=None, test_label=None, title="Classifier Probes"):
     #import matplotlib.pyplot as plt
 
-    train_input = dataset['train_input']
-    train_label = dataset['train_label']
-    test_input = dataset['test_input']
-    test_label = dataset['test_label']
+    # train_input = dataset['train_input']
+    # train_label = dataset['train_label']
+    # test_input = dataset['test_input']
+    # test_label = dataset['test_label']
 
     model.eval()
     model(train_input)
@@ -389,11 +384,9 @@ def plot_classifier_probes(model, dataset, evalset='train', title="Classifier Pr
         classifier = SGDClassifier(penalty=None, loss="log_loss", learning_rate="constant", eta0=0.01)
         classifier.fit(preacts_np, targets)
         classifiers.append(classifier)
-        #score = classifier.score(preacts_np, targets)
-        #probe_scores.append(score)
-        #layer_indices.append(i)
 
-    if evalset == 'test':
+    # Evaluate on test set if provided
+    if test_input is not None and test_label is not None:
         model(test_input)
         targets = test_label.cpu().detach().numpy()
 
