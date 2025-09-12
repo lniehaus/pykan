@@ -110,8 +110,8 @@ class KANLayer(nn.Module):
         self.grid_range = grid_range
         self.grid_range_extended = (grid[0][0], grid[0][-1])
 
-        #print("grid", grid)
-        #print("self.grid_range_extended", self.grid_range_extended)
+        # print("grid", grid)
+        # print("self.grid_range_extended", self.grid_range_extended)
 
 
         # print("grid.shape extended", grid.shape)

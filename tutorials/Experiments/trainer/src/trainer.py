@@ -8,7 +8,7 @@ import mlflow.pytorch
 from datasets import random_data, moon_data, mnist_data, cifar10_data, make_classification_data, mnist1d_data, boxes_2d_dataset, and_data, or_data, xor_data
 from plotter import plot_train_data, plot_predictions, plot_violins, plot_violins_extended, plot_summed_violins, plot_mean_std, plot_layerwise_postacts_and_postsplines, generate_grid_tensor, plot_decision_boundary, plot_heatmap, plot_classifier_probes
 from video import create_video
-from metrics import count_connected_regions, calc_boundary_length, calc_boundary_curvature, calc_fractal_dimension
+from metrics import count_connected_regions, count_artifacts, calc_boundary_length, calc_boundary_curvature, calc_fractal_dimension
 
 # SYMBOLIC FORMULA
 def symbolic_regression(model, dataset):
@@ -71,6 +71,7 @@ def parse_args():
     parser.add_argument('--lamb_entropy', type=float, default=0.0, help='Weight for the entropy loss')
     parser.add_argument('--lamb_coef', type=float, default=0.0, help='Weight for the coefficient loss')
     parser.add_argument('--lamb_coefdiff', type=float, default=0.0, help='Weight for the coefficient difference loss')
+    parser.add_argument('--reg_metric', type=str, choices=['edge_forward_spline_n', 'edge_forward_sum', 'edge_forward_spline_u', 'edge_backward', 'node_backward'], default='edge_forward_spline_n', help='Regularization metric')
     parser.add_argument('--optimizer', type=str, choices=['Adam', 'LBFGS'], default='LBFGS', help='Optimizer for training')
 
     # Trainable Features
@@ -412,14 +413,21 @@ def main():
                         lamb_l1=args.lamb_l1,
                         lamb_entropy=args.lamb_entropy,
                         lamb_coef=args.lamb_coef,
-                        lamb_coefdiff=args.lamb_coefdiff
+                        lamb_coefdiff=args.lamb_coefdiff,
+                        reg_metric=args.reg_metric
                         )
     print(f"train_acc: {results['train_acc'][-1]:2f}, test_acc: {results['test_acc'][-1]:2f}")
 
-    # Log Fitting Results in mlflow
+    # # Log Fitting Results in mlflow
+    # for i in range(len(results['train_acc'])):
+    #     for key in results.keys():
+    #         mlflow.log_metric(key, results[key][i], step=i)
+    #         #mlflow.log_metric(key, results[key][i], step=i, synchronous=False)
+
+    # Log Fitting Results in mlflow using log_metrics
     for i in range(len(results['train_acc'])):
-        for key in results.keys():
-            mlflow.log_metric(key, results[key][i], step=i)
+        step_metrics = {key: results[key][i] for key in results.keys()}
+        mlflow.log_metrics(step_metrics, step=i)
 
 
     mlflow.log_metric("train_acc_max", max(results['train_acc']), step=0)
@@ -623,11 +631,13 @@ def main():
         mlflow.log_figure(fig, "output_decision_boundary.png")
 
         connected_regions = count_connected_regions(pred)
+        artifacts = count_artifacts(pred, dataset['train_input'].cpu().numpy())
         boundary_length = calc_boundary_length(pred, xx, yy)
         curvature = calc_boundary_curvature(pred, xx, yy)
         fractal_dim = calc_fractal_dimension(pred)
         print(f"Connected Regions: {connected_regions}, Boundary Length: {boundary_length}, Curvature: {curvature}, Fractal Dimension: {fractal_dim}")
         mlflow.log_metric("connected_regions", connected_regions)
+        mlflow.log_metric("artifacts", artifacts)
         mlflow.log_metric("boundary_length", boundary_length)
         mlflow.log_metric("curvature", curvature)
         mlflow.log_metric("fractal_dimension", fractal_dim)

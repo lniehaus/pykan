@@ -3,7 +3,7 @@
 # Execution
 export JOB_NUM=10
 # Utility
-export experiment_name="depth_noise_boxes_05"
+export experiment_name="depth_noise_boxes_06"
 export device_index=1
 export seed=0
 # Model

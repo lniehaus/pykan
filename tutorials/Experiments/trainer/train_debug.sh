@@ -7,12 +7,12 @@ export seed=0
 # Model
 export hidden_form='square'
 export hidden_form='linear'
-#export hidden_form='kat'
+export hidden_form='kat'
 export hidden_width=3
-export hidden_depth=0
+export hidden_depth=1
 #export hidden_depth=10
 #export hidden_depth=5
-export steps=1_000
+export steps=5_000
 export grid=5
 #export grid=3
 export k=3
@@ -48,6 +48,11 @@ export lamb_entropy=2.0
 #export lamb_entropy=0.0
 export lamb_coef=0.0
 export lamb_coefdiff=0.0
+export reg_metric='edge_forward_spline_n'
+#export reg_metric='edge_forward_sum'
+#export reg_metric='edge_forward_spline_u'
+#export reg_metric='edge_backward'
+#export reg_metric='node_backward'
 #export optimizer='LBFGS' # Adam LBFGS
 export optimizer='Adam'
 
@@ -61,8 +66,8 @@ export update_grid=true
 # export base_fun='zero'
 # export sp_trainable=false
 # export sb_trainable=false
-# export affine_trainable=false
-# export update_grid=false
+export affine_trainable=false
+export update_grid=false
 # Dataset
 #export dataset='random'
 #export dataset='moon'
@@ -82,7 +87,7 @@ export random_uniform_range_min=-1
 export random_uniform_range_max=1
 export random_normal_mean=0
 export random_normal_std=1
-export boxes_n_classes=$((6**2))
+export boxes_n_classes=$((3**2))
 export boxes_datapoints_per_class=10
 export task='classification'
 #export task='regression'
@@ -117,6 +122,7 @@ python src/trainer.py \
     --lamb_entropy $lamb_entropy \
     --lamb_coef $lamb_coef \
     --lamb_coefdiff $lamb_coefdiff \
+    --reg_metric $reg_metric \
     --optimizer $optimizer \
     --sp_trainable $sp_trainable \
     --sb_trainable $sb_trainable \
