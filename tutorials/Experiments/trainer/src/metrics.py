@@ -15,6 +15,26 @@ def count_connected_regions(pred_map):
 # mlp_linear_regions = count_linear_regions(mlp_pred)
 # kan_linear_regions = count_linear_regions(kan_pred)
 
+def count_artifacts(pred_map, train_points):
+    """
+    Count connected regions in pred_map that do not contain any train_points.
+    pred_map: 2D array of predicted class labels.
+    train_points: Nx2 array of (row, col) indices of training data in pred_map coordinates.
+    """
+    artifact_count = 0
+    train_mask = np.zeros_like(pred_map, dtype=bool)
+    for pt in train_points:
+        r, c = int(pt[0]), int(pt[1])
+        if 0 <= r < pred_map.shape[0] and 0 <= c < pred_map.shape[1]:
+            train_mask[r, c] = True
+    for c in np.unique(pred_map):
+        labeled = measure.label(pred_map == c, connectivity=1)
+        for region_idx in range(1, labeled.max() + 1):
+            region_mask = labeled == region_idx
+            if not np.any(train_mask & region_mask):
+                artifact_count += 1
+    return artifact_count
+
 # 2. Decision Boundary Length (2D)
 def calc_boundary_length(pred_map, xx, yy):
     # Find boundaries between classes
