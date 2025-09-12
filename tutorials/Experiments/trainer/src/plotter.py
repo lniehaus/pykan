@@ -346,10 +346,100 @@ def generate_grid_tensor(bounds=(-1, 1, -1, 1), resolution=1000, device='cpu', d
     grid_tensor = torch.from_numpy(grid).type(dtype).to(device)
     return grid_tensor, xx, yy
 
+# def plot_decision_boundary(pred, dataset, xx, yy, title="Decision Boundary"):
+#     n_classes = len(torch.unique(dataset['train_label']))
+#     plt.figure(figsize=(6, 6))
+#     plt.contourf(xx, yy, pred, alpha=0.3, levels=n_classes, cmap='tab20')
+#     plt.scatter(dataset['train_input'][:, 0].cpu(), dataset['train_input'][:, 1].cpu(), 
+#                 c=dataset['train_label'].cpu(), cmap='tab20', edgecolor='k', s=80, marker='o', label='Train Data (o)')
+#     plt.scatter(dataset['test_input'][:, 0].cpu(), dataset['test_input'][:, 1].cpu(), 
+#                 c=dataset['test_label'].cpu(), cmap='tab20', edgecolor='k', s=80, marker='v', label='Test Data (v)')
+#     plt.title(title)
+#     plt.xlabel('x')
+#     plt.ylabel('y')
+#     plt.legend()
+#     plt.tight_layout()
+#     #plt.show()
+#     return plt.gcf()
+
 def plot_decision_boundary(pred, dataset, xx, yy, title="Decision Boundary"):
-    n_classes = len(torch.unique(dataset['train_label']))
+    # Determine unique classes and set up colormap
+    train_labels = dataset['train_label'].cpu().numpy().flatten()
+    test_labels = dataset['test_label'].cpu().numpy().flatten()
+    all_labels = np.concatenate([train_labels, test_labels])
+    unique_classes = np.unique(all_labels)
+    n_classes = len(unique_classes)
+    cmap = plt.get_cmap('tab20', n_classes)
+
+    # Prepare prediction grid for contourf
     plt.figure(figsize=(6, 6))
-    plt.contourf(xx, yy, pred, alpha=0.3, levels=n_classes, cmap='tab20')
+    # If pred is 1D, reshape to match xx shape
+    if pred.ndim == 1:
+        pred = pred.reshape(xx.shape)
+    # If pred is probabilities, take argmax
+    if pred.ndim == 3 and pred.shape[-1] == n_classes:
+        pred = np.argmax(pred, axis=-1)
+    plt.contourf(xx, yy, pred, alpha=0.3, levels=np.arange(n_classes+1)-0.5, cmap=cmap)
+
+    # Scatter train points
+    plt.scatter(dataset['train_input'][:, 0].cpu(), dataset['train_input'][:, 1].cpu(),
+                c=train_labels, cmap=cmap, edgecolor='k', s=80, marker='o', label='Train Data (o)')
+    # Scatter test points
+    plt.scatter(dataset['test_input'][:, 0].cpu(), dataset['test_input'][:, 1].cpu(),
+                c=test_labels, cmap=cmap, edgecolor='k', s=80, marker='v', label='Test Data (v)')
+
+    plt.title(title)
+    plt.xlabel('x')
+    plt.ylabel('y')
+    plt.legend()
+    plt.tight_layout()
+    return plt.gcf()
+
+# def plot_decision_boundary(pred, dataset, xx, yy, title="Decision Boundary"):
+#     # Determine unique classes and set up colormap
+#     train_labels = dataset['train_label'].cpu().numpy().flatten()
+#     test_labels = dataset['test_label'].cpu().numpy().flatten()
+#     all_labels = np.concatenate([train_labels, test_labels])
+#     unique_classes = np.unique(all_labels)
+#     n_classes = len(unique_classes)
+#     cmap = plt.get_cmap('tab20', n_classes)
+
+#     # Prepare prediction grid for contourf
+#     plt.figure(figsize=(6, 6))
+#     # If pred is 1D, reshape to match xx shape
+#     if pred.ndim == 1:
+#         pred = pred.reshape(xx.shape)
+#     # If pred is probabilities, take argmax
+#     if pred.ndim == 3 and pred.shape[-1] == n_classes:
+#         pred = np.argmax(pred, axis=-1)
+#     plt.contourf(xx, yy, pred, alpha=0.3, levels=np.arange(n_classes+1)-0.5, cmap=cmap)
+
+#     # Scatter train points
+#     train_scatter = plt.scatter(dataset['train_input'][:, 0].cpu(), dataset['train_input'][:, 1].cpu(),
+#                 c=train_labels, cmap=cmap, edgecolor='k', s=80, marker='o', label='Train Data (o)')
+#     # Scatter test points
+#     test_scatter = plt.scatter(dataset['test_input'][:, 0].cpu(), dataset['test_input'][:, 1].cpu(),
+#                 c=test_labels, cmap=cmap, edgecolor='k', s=80, marker='v', label='Test Data (v)')
+
+#     # Add legend
+#     handles = [
+#         plt.Line2D([0], [0], marker='o', color='w', label='Train Data (o)', markerfacecolor='gray', markeredgecolor='k', markersize=10),
+#         plt.Line2D([0], [0], marker='v', color='w', label='Test Data (v)', markerfacecolor='gray', markeredgecolor='k', markersize=10)
+#     ]
+#     plt.legend(handles=handles, loc='best')
+
+#     plt.title(title)
+#     plt.xlabel('x')
+#     plt.ylabel('y')
+#     plt.tight_layout()
+#     return plt.gcf()
+
+def plot_heatmap(pred, dataset, xx, yy, title="Output Heatmap"):
+    plt.figure(figsize=(6, 6))
+    # Plot the heatmap of the prediction values
+    plt.imshow(pred, extent=(xx.min(), xx.max(), yy.min(), yy.max()), origin='lower', aspect='auto', cmap='viridis', alpha=0.7)
+    plt.colorbar(label='Output Value')
+    # Overlay train and test data points
     plt.scatter(dataset['train_input'][:, 0].cpu(), dataset['train_input'][:, 1].cpu(), 
                 c=dataset['train_label'].cpu(), cmap='tab20', edgecolor='k', s=80, marker='o', label='Train Data (o)')
     plt.scatter(dataset['test_input'][:, 0].cpu(), dataset['test_input'][:, 1].cpu(), 
@@ -359,7 +449,6 @@ def plot_decision_boundary(pred, dataset, xx, yy, title="Decision Boundary"):
     plt.ylabel('y')
     plt.legend()
     plt.tight_layout()
-    #plt.show()
     return plt.gcf()
 
 def plot_classifier_probes(model, train_input, train_label, test_input=None, test_label=None, title="Classifier Probes"):

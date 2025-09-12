@@ -9,10 +9,10 @@ export hidden_form='square'
 export hidden_form='linear'
 #export hidden_form='kat'
 export hidden_width=3
-#export hidden_depth=1
-export hidden_depth=10
+export hidden_depth=0
+#export hidden_depth=10
 #export hidden_depth=5
-export steps=1000
+export steps=1_000
 export grid=5
 #export grid=3
 export k=3
@@ -65,12 +65,15 @@ export update_grid=true
 # export update_grid=false
 # Dataset
 #export dataset='random'
-export dataset='moon'
+#export dataset='moon'
 #export dataset='make_classification'
 #export dataset='mnist'
 #export dataset='cifar10'
 #export dataset='mnist1d'
-#export dataset='boxes_2d'
+export dataset='boxes_2d'
+#export dataset='and'
+#export dataset='or'
+#export dataset='xor'
 export moon_noise_level=0.5
 export random_distribution='uniform'
 export random_input_dim=5
@@ -79,8 +82,10 @@ export random_uniform_range_min=-1
 export random_uniform_range_max=1
 export random_normal_mean=0
 export random_normal_std=1
-export boxes_n_classes=4
+export boxes_n_classes=$((6**2))
 export boxes_datapoints_per_class=10
+export task='classification'
+#export task='regression'
 # Eval & Plots
 export symbolic_regression=false
 export plot_initialized_model=true
@@ -128,6 +133,7 @@ python src/trainer.py \
     --random_normal_std $random_normal_std \
     --boxes_n_classes $boxes_n_classes \
     --boxes_datapoints_per_class $boxes_datapoints_per_class \
+    --task $task \
     --symbolic_regression $symbolic_regression \
     --plot_initialized_model $plot_initialized_model \
     --plot_trained_model $plot_trained_model \
