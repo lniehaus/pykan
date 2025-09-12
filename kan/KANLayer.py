@@ -170,12 +170,10 @@ class KANLayer(nn.Module):
         elif init_mode == 'kaiming_leaky_in_out':
             noises = (torch.rand(self.num+1, self.in_dim, self.out_dim) - 1/2) * 2.0 * np.sqrt(2/(1+(np.sqrt(5)**2))) * np.sqrt(3.0 / in_dim+out_dim)
 
+
         self.coef = torch.nn.Parameter(curve2coef(self.grid[:,k:-k].permute(1,0), noises, self.grid, k))
+
         
-
-        # print("noises.shape", noises.shape)
-        # print("self.coef.shape", self.coef.shape)
-
         if sparse_init:
             self.mask = torch.nn.Parameter(sparse_mask(in_dim, out_dim)).requires_grad_(False)
         else:

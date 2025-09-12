@@ -3,18 +3,18 @@
 # Execution
 export JOB_NUM=10
 # Utility
-export experiment_name="depth_capacity_boxes_06"
+export experiment_name="depth_capacity_boxes_07"
 export device_index=1
 export seed=0
 # Model
-export hidden_form='square'
-#export hidden_form='linear'
+#export hidden_form='square'
+export hidden_form='linear'
 #export hidden_form='kat'
 export hidden_width=2
 export hidden_depth=1
-export steps=1000
-#export grid=5
-export grid=40
+export steps=10_000
+export grid=5
+#export grid=40
 export k=3
 export mode='default'
 export spline_noise_scale=0.3
@@ -61,8 +61,10 @@ export random_normal_mean=0
 export random_normal_std=1
 export boxes_n_classes=4
 export boxes_datapoints_per_class=10
-#export task='classification'
-export task='regression'
+export task='classification'
+#export task='regression'
+#export output_layer_mode='default'
+export output_layer_mode='linear'
 # Eval & Plots
 export symbolic_regression=false
 export plot_initialized_model=true
@@ -139,6 +141,7 @@ for dataset_complexity in "${dataset_complexities[@]}"; do
                 --boxes_n_classes $dataset_complexity \
                 --boxes_datapoints_per_class $boxes_datapoints_per_class \
                 --task $task \
+                --output_layer_mode $output_layer_mode \
                 --symbolic_regression $symbolic_regression \
                 --plot_initialized_model $plot_initialized_model \
                 --plot_trained_model $plot_trained_model \

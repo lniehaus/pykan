@@ -91,6 +91,8 @@ export boxes_n_classes=$((3**2))
 export boxes_datapoints_per_class=10
 export task='classification'
 #export task='regression'
+#export output_layer_mode='default'
+export output_layer_mode='linear'
 # Eval & Plots
 export symbolic_regression=false
 export plot_initialized_model=true
@@ -140,6 +142,7 @@ python src/trainer.py \
     --boxes_n_classes $boxes_n_classes \
     --boxes_datapoints_per_class $boxes_datapoints_per_class \
     --task $task \
+    --output_layer_mode $output_layer_mode \
     --symbolic_regression $symbolic_regression \
     --plot_initialized_model $plot_initialized_model \
     --plot_trained_model $plot_trained_model \

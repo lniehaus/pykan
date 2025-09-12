@@ -94,6 +94,7 @@ def parse_args():
     parser.add_argument('--boxes_n_classes', type=int, default=4, help='Number of classes for the boxes 2d dataset')
     parser.add_argument('--boxes_datapoints_per_class', type=int, default=10, help='Number of datapoints per class for the boxes 2d dataset')
     parser.add_argument('--task', type=str, choices=['classification', 'regression'], default='classification', help='Task type: classification or regression')
+    parser.add_argument('--output_layer_mode', type=str, choices=['default', 'linear'], default='default', help='Output layer type: default (spline) or linear')
 
     # Eval & Plots
     parser.add_argument('--symbolic_regression', type=str2bool, default=False, help='Activates the Symbolic Regression. Takes long for big models')
@@ -296,6 +297,7 @@ def main():
             init_mode=args.init_mode,
             grid_mode=args.grid_mode,
             grid_bound=args.grid_bound,
+            output_layer_mode=args.output_layer_mode,
             ckpt_path=ckpt_folder
             )
 
