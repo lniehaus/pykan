@@ -242,13 +242,15 @@ class MultKAN(nn.Module):
                                     base_fun=lambda x: x*0.0,
                                     #grid_eps=grid_eps, 
                                     grid_eps=1.0, 
-                                    #grid_range=self.grid_range, 
-                                    grid_range=[-10,10], 
+                                    grid_range=self.grid_range, 
+                                    #grid_range=[-10,10], 
                                     sp_trainable=False, 
                                     sb_trainable=False, 
                                     sparse_init=sparse_init, 
                                     mode=self.mode, 
-                                    init_mode=self.init_mode)
+                                    init_mode=self.init_mode,
+                                    linear_mode=True
+                                    )
                 self.act_fun.append(sp_batch)
 
                 # print("sp_batch.coef.shape", sp_batch.coef.shape)
