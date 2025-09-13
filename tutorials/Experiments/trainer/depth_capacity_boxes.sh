@@ -3,14 +3,14 @@
 # Execution
 export JOB_NUM=10
 # Utility
-export experiment_name="depth_capacity_boxes_07"
+export experiment_name="depth_capacity_boxes_14"
 export device_index=1
 export seed=0
 # Model
-#export hidden_form='square'
-export hidden_form='linear'
+export hidden_form='square'
+#export hidden_form='linear'
 #export hidden_form='kat'
-export hidden_width=2
+export hidden_width=5
 export hidden_depth=1
 export steps=10_000
 export grid=5
@@ -80,7 +80,7 @@ echo "EXPERIMENT_NAME: $experiment_name"
 #widths=(2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21 22 23 24 25 26 27 28 29 30 31 32 33 34 35 36 37 38 39 40 41 42 43 44 45 46 47 48 49 50)
 #depths=(0 1 2 3 4 7 11 17)
 #depths=(27 17 11 7 4 3 2 1 0)
-depths=(11 7 4 3 2 1 0)
+depths=(4 3 2 1 0)
 #noise_scales=(0.01 0.05 0.1 0.2 0.3 0.4 0.5 0.6 0.7 0.8 0.9 1 1.1 1.2 1.3 1.4 1.5 1.6 1.7 1.8 1.9 2 2.1 2.2 2.3 2.4 2.5 2.6 2.7 2.8 2.9 3 3.1 3.2 3.3 3.4 3.5 3.6 3.7 3.8 3.9 4)
 #noise_scales=(0.01 0.02 0.03 0.04 0.06 0.10 0.14 0.21 0.31 0.46 0.68 1.00)
 #noise_scales=(0.10 0.15 0.2 0.25 0.30 0.35 0.40 0.45 0.50 0.55 0.60 0.65 0.70 0.75 0.80 0.85 0.90 0.95 1.00)
@@ -90,7 +90,7 @@ depths=(11 7 4 3 2 1 0)
 datasets=('boxes_2d')
 
 dataset_complexities=()
-for i in {6..1}; do
+for i in {20..1}; do
   dataset_complexities+=($((i**2)))
 done
 
