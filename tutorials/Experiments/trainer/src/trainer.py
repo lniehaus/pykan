@@ -5,7 +5,7 @@ import torch
 import numpy as np
 import mlflow
 import mlflow.pytorch
-from datasets import random_data, moon_data, mnist_data, cifar10_data, make_classification_data, mnist1d_data, boxes_2d_dataset, and_data, or_data, xor_data
+from datasets import random_data, moon_data, mnist_data, cifar10_data, make_classification_data, mnist1d_data, boxes_2d_dataset, spiral_data, and_data, or_data, xor_data
 from plotter import plot_train_data, plot_predictions, plot_violins, plot_violins_extended, plot_summed_violins, plot_mean_std, plot_layerwise_postacts_and_postsplines, generate_grid_tensor, plot_decision_boundary, plot_heatmap, plot_classifier_probes
 from video import create_video
 from metrics import count_connected_regions, count_artifacts, calc_boundary_length, calc_boundary_curvature, calc_fractal_dimension
@@ -81,7 +81,7 @@ def parse_args():
     parser.add_argument('--update_grid', type=str2bool, default=False, help='Whether to update the grid during training')
 
     # Dataset
-    parser.add_argument('--dataset', type=str, choices=['random', 'moon', 'mnist', 'cifar10', 'make_classification', 'mnist1d', 'boxes_2d', 'and', 'or', 'xor'], default='random', help='Select Dataset')
+    parser.add_argument('--dataset', type=str, choices=['random', 'moon', 'mnist', 'cifar10', 'make_classification', 'mnist1d', 'boxes_2d', 'spiral', 'and', 'or', 'xor'], default='random', help='Select Dataset')
     parser.add_argument('--moon_noise_level', type=float, default=0, help='Adjust the noise for the moon dataset in the KAN')
     parser.add_argument('--random_distribution', type=str, choices=['uniform', 'normal'], default='random', help='Random Distribution')
     parser.add_argument('--random_input_dim', type=int, default=2, help='random Dataset Input Dimension')
@@ -93,6 +93,10 @@ def parse_args():
     parser.add_argument('--mnist1d_subset_size', type=int, default=100_000, help='Subset size for the mnist1d dataset') 
     parser.add_argument('--boxes_n_classes', type=int, default=4, help='Number of classes for the boxes 2d dataset')
     parser.add_argument('--boxes_datapoints_per_class', type=int, default=10, help='Number of datapoints per class for the boxes 2d dataset')
+    parser.add_argument('--boxes_normal_std', type=float, default=-1, help='Standard Deviation of the Gaussian noise for the boxes 2d dataset')
+    parser.add_argument('--spiral_n_samples', type=int, default=1000, help='Number of samples for the spiral dataset')
+    parser.add_argument('--spiral_n_classes', type=int, default=3, help='Number of classes for the spiral dataset')
+    parser.add_argument('--spiral_noise', type=float, default=0.5, help='Noise for the spiral dataset')
     parser.add_argument('--task', type=str, choices=['classification', 'regression'], default='classification', help='Task type: classification or regression')
     parser.add_argument('--output_layer_mode', type=str, choices=['default', 'linear'], default='default', help='Output layer type: default (spline) or linear')
 
@@ -204,11 +208,18 @@ def main():
             datapoints_per_class=args.boxes_datapoints_per_class,
             bounds=(args.random_uniform_range_min, args.random_uniform_range_max, args.random_uniform_range_min, args.random_uniform_range_max),
             distribution="normal",
+            #normal_std=None,
+            normal_std=None if args.boxes_normal_std < 0 else args.boxes_normal_std,
             device=device
         )
         input_dim = 2
         output_dim = args.boxes_n_classes
         output_classes = args.boxes_n_classes
+    elif args.dataset == "spiral":
+        dataset = spiral_data(n_samples=args.spiral_n_samples, n_classes=args.spiral_n_classes, noise=args.spiral_noise, seed=args.seed, device=device)
+        input_dim = 2
+        output_dim = args.spiral_n_classes
+        output_classes = args.spiral_n_classes
     elif args.dataset == "and":
         dataset = and_data(device=device)
         input_dim = 2
@@ -593,7 +604,7 @@ def main():
     #     mlflow.log_metric(name, score, step=i)
 
 
-    if args.dataset == 'boxes_2d' or args.dataset == 'moon' or args.random_input_dim == 2:
+    if input_dim == 2:
         grid_tensor, xx, yy = generate_grid_tensor(bounds=(-1, 1, -1, 1), resolution=1000, device=device, dtype=torch.FloatTensor)
 
         # Calculate Decision Boundary Metrics

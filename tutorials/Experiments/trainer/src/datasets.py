@@ -520,9 +520,190 @@ def boxes_2d_dataset(
     labels = np.array(labels)
 
     train_input, test_input, train_label, test_label = train_test_split(
-        data, labels, test_size=0.2, random_state=42, stratify=labels
+        data, labels, test_size=0.5, random_state=42, stratify=labels
     )
 
+    dataset = {}
+    dataset['train_input'] = torch.from_numpy(train_input).type(dtype).to(device)
+    dataset['test_input'] = torch.from_numpy(test_input).type(dtype).to(device)
+    dataset['train_label'] = torch.from_numpy(train_label).type(torch.long).to(device)
+    dataset['test_label'] = torch.from_numpy(test_label).type(torch.long).to(device)
+    return dataset
+
+# def boxes_2d_dataset(
+#     n_classes=16,
+#     datapoints_per_class=10,
+#     bounds=(-1, 1, -1, 1),
+#     device="cpu",
+#     seed=42,
+#     distribution="uniform",  # "uniform" or "normal"
+#     normal_mean=0.0,
+#     normal_std=None  # If None, will be calculated to avoid overlap
+# ):
+#     dtype = torch.get_default_dtype()
+#     np.random.seed(seed)
+#     # Double the grid size so there are twice as many regions as classes
+#     grid_size = int(np.ceil(np.sqrt(n_classes * 2)))
+#     x_edges = np.linspace(bounds[0], bounds[1], grid_size + 1)
+#     y_edges = np.linspace(bounds[2], bounds[3], grid_size + 1)
+
+#     # Create all grid positions
+#     grid_positions = [(i, j) for i in range(grid_size) for j in range(grid_size)]
+#     np.random.shuffle(grid_positions)
+
+#     # Each class gets two regions
+#     assert len(grid_positions) >= n_classes * 2, "Not enough grid regions for 2 per class"
+#     region_pairs = [grid_positions[i*2:(i+1)*2] for i in range(n_classes)]
+
+#     class_indices = np.arange(n_classes)
+#     np.random.shuffle(class_indices)
+#     data = []
+#     labels = []
+
+#     # Calculate normal_std if needed to avoid overlap
+#     if distribution == "normal" and normal_std is None:
+#         x_cell = (bounds[1] - bounds[0]) / grid_size
+#         y_cell = (bounds[3] - bounds[2]) / grid_size
+#         normal_std = min(x_cell, y_cell) / 6.0
+
+#     for class_idx, regions in zip(class_indices, region_pairs):
+#         for (i, j) in regions:
+#             x_min, x_max = x_edges[i], x_edges[i+1]
+#             y_min, y_max = y_edges[j], y_edges[j+1]
+#             if distribution == "uniform":
+#                 xs = np.random.uniform(x_min, x_max, size=(datapoints_per_class, 1))
+#                 ys = np.random.uniform(y_min, y_max, size=(datapoints_per_class, 1))
+#             elif distribution == "normal":
+#                 x_center = (x_min + x_max) / 2
+#                 y_center = (y_min + y_max) / 2
+#                 xs = np.random.normal(loc=x_center + normal_mean, scale=normal_std, size=(datapoints_per_class, 1))
+#                 ys = np.random.normal(loc=y_center + normal_mean, scale=normal_std, size=(datapoints_per_class, 1))
+#                 xs = np.clip(xs, x_min, x_max)
+#                 ys = np.clip(ys, y_min, y_max)
+#             else:
+#                 raise ValueError("distribution must be 'uniform' or 'normal'")
+#             points = np.hstack([xs, ys])
+#             data.append(points)
+#             labels.extend([class_idx] * datapoints_per_class)
+#     data = np.vstack(data)
+#     labels = np.array(labels)
+
+#     train_input, test_input, train_label, test_label = train_test_split(
+#         data, labels, test_size=0.5, random_state=42, stratify=labels
+#     )
+
+#     dataset = {}
+#     dataset['train_input'] = torch.from_numpy(train_input).type(dtype).to(device)
+#     dataset['test_input'] = torch.from_numpy(test_input).type(dtype).to(device)
+#     dataset['train_label'] = torch.from_numpy(train_label).type(torch.long).to(device)
+#     dataset['test_label'] = torch.from_numpy(test_label).type(torch.long).to(device)
+#     return dataset
+
+# def boxes_2d_dataset(
+#     n_classes=16,
+#     datapoints_per_class=10,
+#     bounds=(-1, 1, -1, 1),
+#     device="cpu",
+#     seed=42,
+#     distribution="uniform",  # "uniform" or "normal"
+#     normal_mean=0.0,
+#     normal_std=None  # If None, will be calculated to avoid overlap
+# ):
+#     dtype = torch.get_default_dtype()
+#     np.random.seed(seed)
+#     grid_size = int(np.ceil(np.sqrt(n_classes))) * 2
+#     x_edges = np.linspace(bounds[0], bounds[1], grid_size + 1)
+#     y_edges = np.linspace(bounds[2], bounds[3], grid_size + 1)
+
+#     # Create all grid positions
+#     grid_positions = [(i, j) for i in range(grid_size) for j in range(grid_size)]
+#     np.random.shuffle(grid_positions)
+
+#     # Randomly pair up grid positions (if odd, last one is alone)
+#     pairs = []
+#     for k in range(0, len(grid_positions) - 1, 2):
+#         pairs.append([grid_positions[k], grid_positions[k + 1]])
+#     if len(grid_positions) % 2 == 1:
+#         pairs.append([grid_positions[-1]])
+
+#     # Assign classes to pairs (same class for both positions in a pair)
+#     class_indices = np.arange(n_classes)
+#     np.random.shuffle(class_indices)
+#     data = []
+#     labels = []
+#     class_idx = 0
+
+#     # Calculate normal_std if needed to avoid overlap
+#     if distribution == "normal" and normal_std is None:
+#         x_cell = (bounds[1] - bounds[0]) / grid_size
+#         y_cell = (bounds[3] - bounds[2]) / grid_size
+#         normal_std = min(x_cell, y_cell) / 6.0
+
+#     for pair in pairs:
+#         if class_idx >= n_classes:
+#             break
+#         for (i, j) in pair:
+#             if class_idx >= n_classes:
+#                 break
+#             x_min, x_max = x_edges[i], x_edges[i + 1]
+#             y_min, y_max = y_edges[j], y_edges[j + 1]
+#             if distribution == "uniform":
+#                 xs = np.random.uniform(x_min, x_max, size=(datapoints_per_class, 1))
+#                 ys = np.random.uniform(y_min, y_max, size=(datapoints_per_class, 1))
+#             elif distribution == "normal":
+#                 x_center = (x_min + x_max) / 2
+#                 y_center = (y_min + y_max) / 2
+#                 xs = np.random.normal(loc=x_center + normal_mean, scale=normal_std, size=(datapoints_per_class, 1))
+#                 ys = np.random.normal(loc=y_center + normal_mean, scale=normal_std, size=(datapoints_per_class, 1))
+#                 xs = np.clip(xs, x_min, x_max)
+#                 ys = np.clip(ys, y_min, y_max)
+#             else:
+#                 raise ValueError("distribution must be 'uniform' or 'normal'")
+#             points = np.hstack([xs, ys])
+#             data.append(points)
+#             labels.extend([class_indices[class_idx]] * datapoints_per_class)
+#         class_idx += 1
+#         if class_idx >= n_classes:
+#             break
+
+#     data = np.vstack(data)
+#     labels = np.array(labels)
+
+#     train_input, test_input, train_label, test_label = train_test_split(
+#         data, labels, test_size=0.5, random_state=42, stratify=labels
+#     )
+
+#     dataset = {}
+#     dataset['train_input'] = torch.from_numpy(train_input).type(dtype).to(device)
+#     dataset['test_input'] = torch.from_numpy(test_input).type(dtype).to(device)
+#     dataset['train_label'] = torch.from_numpy(train_label).type(torch.long).to(device)
+#     dataset['test_label'] = torch.from_numpy(test_label).type(torch.long).to(device)
+#     return dataset
+
+def spiral_data(n_samples=1000, n_classes=3, noise=0.5, seed=0, device="cpu"):
+    np.random.seed(seed)
+    X = []
+    y = []
+    samples_per_class = n_samples // n_classes
+    for class_num in range(n_classes):
+        ix = np.linspace(0, 1, samples_per_class)
+        r = ix
+        t = class_num * 4 + ix * 4 * np.pi + np.random.randn(samples_per_class) * noise
+        x1 = r * np.sin(t)
+        x2 = r * np.cos(t)
+        X.append(np.c_[x1, x2])
+        y.append(np.full(samples_per_class, class_num))
+    X = np.concatenate(X)
+    y = np.concatenate(y)
+    # Shuffle the data
+    idx = np.random.permutation(len(X))
+    X = X[idx]
+    y = y[idx]
+    # Split into train/test (50/50)
+    split = len(X) // 2
+    train_input, test_input = X[:split], X[split:]
+    train_label, test_label = y[:split], y[split:]
+    dtype = torch.get_default_dtype()
     dataset = {}
     dataset['train_input'] = torch.from_numpy(train_input).type(dtype).to(device)
     dataset['test_input'] = torch.from_numpy(test_input).type(dtype).to(device)

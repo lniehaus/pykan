@@ -372,7 +372,7 @@ def plot_decision_boundary(pred, dataset, xx, yy, title="Decision Boundary"):
     cmap = plt.get_cmap('tab20', n_classes)
 
     # Prepare prediction grid for contourf
-    plt.figure(figsize=(6, 6))
+    plt.figure(figsize=(8, 8))
     # If pred is 1D, reshape to match xx shape
     if pred.ndim == 1:
         pred = pred.reshape(xx.shape)
