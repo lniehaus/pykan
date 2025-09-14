@@ -3,7 +3,7 @@
 # Execution
 export JOB_NUM=10
 # Utility
-export experiment_name="depth_capacity_boxes_19"
+export experiment_name="depth_capacity_boxes_20"
 export device_index=1
 export seed=0
 # Model

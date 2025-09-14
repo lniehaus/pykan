@@ -9,11 +9,12 @@ export hidden_form='square'
 #export hidden_form='linear'
 #export hidden_form='kat'
 export hidden_width=2
-export hidden_depth=8
+export hidden_depth=2
 #export hidden_depth=10
 #export hidden_depth=5
-export steps=10_000
+export steps=1_000 # 10_000
 export grid=5
+#export grid=40
 #export grid=3
 export k=3
 #export k=5
@@ -36,12 +37,12 @@ export grid_bound=2.0
 #export learning_rate=1.0
 #export learning_rate=0.001
 export learning_rate=1e-2
-export lamb=0.0
+#export lamb=0.0
 #export lamb=1.0
 #export lamb=0.5
 #export lamb=0.1
 #export lamb=0.01
-#export lamb=0.00005
+export lamb=5e-4
 export lamb_l1=1.0
 export lamb_entropy=2.0
 #export lamb_entropy=10.0
@@ -66,8 +67,9 @@ export update_grid=true
 # export base_fun='zero'
 # export sp_trainable=false
 # export sb_trainable=false
-export affine_trainable=false
-export update_grid=false
+# export affine_trainable=false
+# export update_grid=false
+
 # Dataset
 #export dataset='random'
 #export dataset='moon'
@@ -100,6 +102,9 @@ export task='classification'
 #export task='regression'
 #export output_layer_mode='default'
 export output_layer_mode='linear'
+export classification_loss='cross_entropy'
+#export classification_loss='mse'
+
 # Eval & Plots
 export symbolic_regression=false
 export plot_initialized_model=true
@@ -154,6 +159,7 @@ python src/trainer.py \
     --spiral_n_samples $spiral_n_samples \
     --spiral_noise $spiral_noise \
     --task $task \
+    --classification_loss $classification_loss \
     --output_layer_mode $output_layer_mode \
     --symbolic_regression $symbolic_regression \
     --plot_initialized_model $plot_initialized_model \

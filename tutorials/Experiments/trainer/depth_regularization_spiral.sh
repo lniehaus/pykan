@@ -3,7 +3,7 @@
 # Execution
 export JOB_NUM=10
 # Utility
-export experiment_name="depth_capacity_boxes_19"
+export experiment_name="depth_regularization_spiral_01"
 export device_index=1
 export seed=0
 # Model
@@ -75,8 +75,8 @@ export spiral_n_samples=$((spiral_n_classes * 500))
 export spiral_noise=0.0
 export task='classification'
 #export task='regression'
-#export output_layer_mode='default'
-export output_layer_mode='linear'
+export output_layer_mode='default'
+#export output_layer_mode='linear'
 export classification_loss='cross_entropy'
 #export classification_loss='mse'
 
@@ -89,43 +89,16 @@ export save_model=false # deep models scale horribly and are super big when save
 
 echo "EXPERIMENT_NAME: $experiment_name"
 
-#widths=(20 15 10 5 4 3 2)
-#noise_scales=(2 1 0.5 0.3 0.1 0.05 0.01)
-
-#widths=(2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21 22 23 24 25 26 27 28 29 30 31 32 33 34 35 36 37 38 39 40 41 42 43 44 45 46 47 48 49 50)
-#depths=(0 1 2 3 4 7 11 17)
-#depths=(0 1 2 3 4 7 11 17 27 41 64 100)
-#depths=(27 17 11 7 4 3 2 1 0)
-#depths=(17 11 7 4 3 2 1 0)
-depths=(15 14 13 12 11 10 9 8 7 6 5 4 3 2 1 0)
-#noise_scales=(0.01 0.05 0.1 0.2 0.3 0.4 0.5 0.6 0.7 0.8 0.9 1 1.1 1.2 1.3 1.4 1.5 1.6 1.7 1.8 1.9 2 2.1 2.2 2.3 2.4 2.5 2.6 2.7 2.8 2.9 3 3.1 3.2 3.3 3.4 3.5 3.6 3.7 3.8 3.9 4)
-#noise_scales=(0.01 0.02 0.03 0.04 0.06 0.10 0.14 0.21 0.31 0.46 0.68 1.00)
-#noise_scales=(0.10 0.15 0.2 0.25 0.30 0.35 0.40 0.45 0.50 0.55 0.60 0.65 0.70 0.75 0.80 0.85 0.90 0.95 1.00)
-#noise_scales=(0.30 0.31 0.32 0.33 0.34 0.35 0.36 0.37 0.38 0.39 0.40 0.41 0.42 0.44 0.45 0.46 0.47 0.48 0.49 0.50 0.51 0.52 0.53 0.54 0.55 0.56 0.57 0.58 0.59 0.60)
-#datasets=('moon' 'random')
-#datasets=('moon')
+reg_metrics=('edge_forward_spline_n' 'edge_forward_sum' 'edge_forward_spline_u' 'edge_backward' 'node_backward')
+lambs=(1e-4 1e-5 1e-6 0.0)
 datasets=('spiral')
-
-#dataset_complexities=(6 5 4 3 2)
-dataset_complexities=(3)
-
-# dataset_complexities=()
-# for i in 20 15 10 5 2; do
-#   dataset_complexities+=($((i**2)))
-# done
-
-# dataset_complexities=()
-# for i in {20..1}; do
-#   dataset_complexities+=($((i**2)))
-# done
-
-classification_losses=('cross_entropy' 'mse')
+depths=(10 9 8 7 6 5 4 3 2 1 0)
 
 first_execution=true
 index=0
 
-for classification_loss in "${classification_losses[@]}"; do
-    for dataset_complexity in "${dataset_complexities[@]}"; do
+for reg_metric in "${reg_metrics[@]}"; do
+    for lamb in "${lambs[@]}"; do
         for dataset in "${datasets[@]}"; do
             for hidden_depth in "${depths[@]}"; do
                 toggle_device_index=$((index % 2))
@@ -169,8 +142,8 @@ for classification_loss in "${classification_losses[@]}"; do
                     --boxes_n_classes $boxes_n_classes \
                     --boxes_datapoints_per_class $boxes_datapoints_per_class \
                     --boxes_normal_std $boxes_normal_std \
-                    --spiral_n_classes $dataset_complexity \
-                    --spiral_n_samples $((dataset_complexity * 500)) \
+                    --spiral_n_classes $spiral_n_classes \
+                    --spiral_n_samples $spiral_n_samples \
                     --spiral_noise $spiral_noise \
                     --task $task \
                     --classification_loss $classification_loss \

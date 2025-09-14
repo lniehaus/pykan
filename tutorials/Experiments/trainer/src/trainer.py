@@ -1,10 +1,12 @@
 import argparse
 from kan import *
 import matplotlib.pyplot as plt
-import torch
 import numpy as np
 import mlflow
 import mlflow.pytorch
+import torch
+import torch.nn as nn
+import torch.nn.functional as F
 from datasets import random_data, moon_data, mnist_data, cifar10_data, make_classification_data, mnist1d_data, boxes_2d_dataset, spiral_data, and_data, or_data, xor_data
 from plotter import plot_train_data, plot_predictions, plot_violins, plot_violins_extended, plot_summed_violins, plot_mean_std, plot_layerwise_postacts_and_postsplines, generate_grid_tensor, plot_decision_boundary, plot_heatmap, plot_classifier_probes
 from video import create_video
@@ -73,6 +75,7 @@ def parse_args():
     parser.add_argument('--lamb_coefdiff', type=float, default=0.0, help='Weight for the coefficient difference loss')
     parser.add_argument('--reg_metric', type=str, choices=['edge_forward_spline_n', 'edge_forward_sum', 'edge_forward_spline_u', 'edge_backward', 'node_backward'], default='edge_forward_spline_n', help='Regularization metric')
     parser.add_argument('--optimizer', type=str, choices=['Adam', 'LBFGS'], default='LBFGS', help='Optimizer for training')
+    parser.add_argument('--classification_loss', type=str, choices=['cross_entropy', 'mse'], default='cross_entropy', help='Loss function for classification task')
 
     # Trainable Features
     parser.add_argument('--sp_trainable', type=str2bool, default=False, help='Whether to make the spline parameters trainable')
@@ -112,6 +115,22 @@ def parse_args():
 
 def count_parameters(model):
     return sum(p.numel() for p in model.parameters() if p.requires_grad)
+
+class MSEWithClassIndices(nn.Module):
+    """
+    Computes MSE loss where targets are class indices, not one-hot vectors.
+    Expects input as probabilities (e.g., after softmax), shape [batch, num_classes].
+    Target: [batch] with class indices.
+    """
+    def __init__(self, num_classes):
+        super().__init__()
+        self.num_classes = num_classes
+
+    def forward(self, input, target):
+        # input: [batch, num_classes]
+        # target: [batch] (class indices: 0, 1, ..., num_classes-1)
+        target_one_hot = F.one_hot(target, num_classes=self.num_classes).float()
+        return F.mse_loss(input, target_one_hot)
 
 def main():
 
@@ -243,7 +262,10 @@ def main():
     #task = "regression"
     task = args.task
 
-    loss_fn = torch.nn.CrossEntropyLoss()
+    if args.classification_loss == "cross_entropy":
+        loss_fn = torch.nn.CrossEntropyLoss()
+    elif args.classification_loss == "mse":
+        loss_fn = MSEWithClassIndices(num_classes=output_classes)
 
     if task == "regression":
         print("regression task")
@@ -605,7 +627,8 @@ def main():
 
 
     if input_dim == 2:
-        grid_tensor, xx, yy = generate_grid_tensor(bounds=(-1, 1, -1, 1), resolution=1000, device=device, dtype=torch.FloatTensor)
+        bounds = (dataset['train_input'][:,0].min().item(), dataset['train_input'][:,0].max().item(), dataset['train_input'][:,1].min().item(), dataset['train_input'][:,1].max().item())
+        grid_tensor, xx, yy = generate_grid_tensor(bounds=bounds, resolution=1000, device=device, dtype=torch.FloatTensor)
 
         # Calculate Decision Boundary Metrics
         model.eval()
