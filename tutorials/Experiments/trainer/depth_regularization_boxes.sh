@@ -3,7 +3,7 @@
 # Execution
 export JOB_NUM=20
 # Utility
-export experiment_name="depth_regularization_spiral_03"
+export experiment_name="depth_regularization_boxes_01"
 export device_index=1
 export seed=0
 # Model
@@ -55,8 +55,8 @@ export update_grid=true
 # export affine_trainable=false
 # export update_grid=false
 # Dataset
-#export dataset='boxes_2d'
-export dataset='spiral'
+export dataset='boxes_2d'
+#export dataset='spiral'
 export moon_noise_level=0.5
 export random_distribution='uniform'
 export random_input_dim=5
@@ -91,7 +91,7 @@ echo "EXPERIMENT_NAME: $experiment_name"
 
 reg_metrics=('edge_forward_spline_n' 'edge_forward_sum' 'edge_forward_spline_u' 'edge_backward' 'node_backward')
 lambs=(1e-4 1e-5 1e-6 0.0)
-datasets=('spiral')
+datasets=('boxes_2d')
 depths=(10 5 2 1 0)
 
 first_execution=true
