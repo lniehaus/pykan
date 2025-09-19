@@ -10,7 +10,7 @@ import torch.nn.functional as F
 from datasets import random_data, moon_data, mnist_data, cifar10_data, make_classification_data, mnist1d_data, boxes_2d_dataset, spiral_data, and_data, or_data, xor_data
 from plotter import plot_train_data, plot_predictions, plot_violins, plot_violins_extended, plot_summed_violins, plot_mean_std, plot_layerwise_postacts_and_postsplines, generate_grid_tensor, plot_decision_boundary, plot_heatmap, plot_classifier_probes
 from video import create_video
-from metrics import count_connected_regions, count_artifacts, calc_boundary_length, calc_boundary_curvature, calc_fractal_dimension
+from metrics import count_connected_regions, count_artifacts, calc_boundary_length, calc_boundary_curvature, calc_fractal_dimension, total_flops, total_parameters
 
 # SYMBOLIC FORMULA
 def symbolic_regression(model, dataset):
@@ -334,8 +334,16 @@ def main():
             ckpt_path=ckpt_folder
             )
 
-    parameters = count_parameters(model)
-    mlflow.log_metric("parameters", parameters)
+    # parameters = count_parameters(model)
+    # mlflow.log_metric("parameters", parameters)
+
+    parameters = total_parameters(model)
+    print("total parameters:", parameters)
+    mlflow.log_metric("total_parameters", parameters)
+
+    flops = total_flops(model)
+    print("total flops:", flops)
+    mlflow.log_metric("total_flops", flops)
 
     model(dataset['train_input'])
 
@@ -431,8 +439,10 @@ def main():
     spline_noise_scale_class = indices[0] if indices.size > 0 else -1
     mlflow.log_param("spline_noise_scale_class", spline_noise_scale_class)
 
+    if not any(element > 10 for sublist in width for element in sublist):
+        args.save_video = False
+
     metrics = (train_acc, test_acc)
-    
 
     #results = model.fit(dataset, opt="LBFGS", steps=steps, metrics=(train_acc, test_acc, coef_mean, coef_std), update_grid=update_grid)
     results = model.fit(dataset, 

@@ -12,7 +12,7 @@ export hidden_width=2
 export hidden_depth=2
 #export hidden_depth=10
 #export hidden_depth=5
-export steps=1_000 # 10_000
+export steps=100 # 10_000
 export grid=5
 #export grid=40
 #export grid=3
@@ -37,12 +37,12 @@ export grid_bound=2.0
 #export learning_rate=1.0
 #export learning_rate=0.001
 export learning_rate=1e-2
-#export lamb=0.0
+export lamb=0.0
 #export lamb=1.0
 #export lamb=0.5
 #export lamb=0.1
 #export lamb=0.01
-export lamb=5e-4
+#export lamb=1e-4
 export lamb_l1=1.0
 export lamb_entropy=2.0
 #export lamb_entropy=10.0
@@ -54,21 +54,21 @@ export reg_metric='edge_forward_spline_n'
 #export reg_metric='edge_forward_spline_u'
 #export reg_metric='edge_backward'
 #export reg_metric='node_backward'
-#export optimizer='LBFGS' # Adam LBFGS
-export optimizer='Adam'
+export optimizer='LBFGS' # Adam LBFGS
+#export optimizer='Adam'
 
 # Trainable On
 export base_fun='silu'
 export sp_trainable=true
 export sb_trainable=true
-export affine_trainable=true
-export update_grid=true
+#export affine_trainable=true
+#export update_grid=true
 # Trainable Off
 # export base_fun='zero'
 # export sp_trainable=false
 # export sb_trainable=false
-# export affine_trainable=false
-# export update_grid=false
+export affine_trainable=false
+export update_grid=false
 
 # Dataset
 #export dataset='random'
@@ -109,7 +109,8 @@ export classification_loss='cross_entropy'
 export symbolic_regression=false
 export plot_initialized_model=true
 export plot_trained_model=true
-export save_video=false
+#export save_video=false
+export save_video=true
 export save_model=false
 
 

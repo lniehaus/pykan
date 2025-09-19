@@ -107,3 +107,150 @@ def calc_fractal_dimension(pred):
 # mlp_fractal_dim = fractal_dimension(mlp_pred)
 # kan_fractal_dim = fractal_dimension(kan_pred)
 
+# FLOPs_MAP = {
+#     "zero": 0,
+#     "identity": 0,
+#     "relu": 1,
+#     'square_relu': 2,
+#     "sigmoid":4,
+#     "silu":5,
+#     "tanh":6,
+#     "gelu": 14,
+#     "polynomial2": 1+2+3-1,
+#     "polynomial3": 1+2+3+4-1,
+#     "polynomial5": 1+2+3+4+5-1,
+# }
+
+# def layer_flops(self, din, dout, shortcut_name, grid, k):
+#     flops = (din * dout) * (9 * k * (grid +  1.5 * k) + 2 * grid - 2.5 * k + 1)
+#     if shortcut_name == "zero":
+#         shortcut_flops = 0
+#     else:
+#         shortcut_flops = FLOPs_MAP[shortcut_name] * din + 2 * din * dout
+#     return flops + shortcut_flops
+
+# def layer_parameters(self, din, dout, shortcut_name, grid, k):
+#     parameters = din * dout * (grid + k + 2) + dout
+#     if shortcut_name == "zero":
+#         shortcut_parameters = 0
+#     else:
+#         shortcut_parameters = din * dout
+#     return parameters + shortcut_parameters
+
+# def total_flops(self):
+#     total_flops = 0
+#     for i in range(len(self.layers_width) - 1):
+#         total_flops += self.layer_flops(self.layers_width[i], self.layers_width[i+1], self.shortcut_function_name, self.grid, self.k)
+#     return total_flops
+
+# def total_parameters(self):
+#     total_parameters = 0
+#     for i in range(len(self.layers_width) - 1):
+#         total_parameters += self.layer_parameters(self.layers_width[i], self.layers_width[i+1], self.shortcut_function_name, self.grid, self.k)
+#     return total_parameters
+
+# FLOPs_MAP = {
+#     "zero": 0,
+#     "identity": 0,
+#     "relu": 1,
+#     'square_relu': 2,
+#     "sigmoid": 4,
+#     "silu": 5,
+#     "tanh": 6,
+#     "gelu": 14,
+#     "polynomial2": 1 + 2 + 3 - 1,
+#     "polynomial3": 1 + 2 + 3 + 4 - 1,
+#     "polynomial5": 1 + 2 + 3 + 4 + 5 - 1,
+# }
+
+# def layer_flops(din, dout, shortcut_name, grid, k):
+#     flops = (din * dout) * (9 * k * (grid + 1.5 * k) + 2 * grid - 2.5 * k + 1)
+#     if shortcut_name == "zero":
+#         shortcut_flops = 0
+#     else:
+#         shortcut_flops = FLOPs_MAP.get(shortcut_name, 0) * din + 2 * din * dout
+#     return flops + shortcut_flops
+
+# def layer_parameters(din, dout, shortcut_name, grid, k):
+#     print("din:", din, "dout:", dout, "grid:", grid, "k:", k)
+#     parameters = din * dout * (grid + k + 2) + dout
+#     if shortcut_name == "zero":
+#         shortcut_parameters = 0
+#     else:
+#         shortcut_parameters = din * dout
+#     return parameters + shortcut_parameters
+
+# def total_flops(model):
+#     total_flops = 0
+#     # Try to get required attributes from model
+#     layers_width = getattr(model, "layers_width", None)
+#     shortcut_function_name = getattr(model, "shortcut_function_name", "zero")
+#     grid = getattr(model, "grid", 1)
+#     k = getattr(model, "k", 1)
+#     if layers_width is None and hasattr(model, "width"):
+#         layers_width = model.width
+#     if layers_width is None:
+#         raise ValueError("Model must have 'layers_width' or 'width' attribute.")
+#     for i in range(len(layers_width) - 1):
+#         total_flops += layer_flops(layers_width[i][0], layers_width[i+1][0], shortcut_function_name, grid, k)
+#     return total_flops
+
+# def total_parameters(model):
+#     total_parameters = 0
+#     layers_width = getattr(model, "layers_width", None)
+#     shortcut_function_name = getattr(model, "shortcut_function_name", "zero")
+#     grid = getattr(model, "grid", 1)
+#     k = getattr(model, "k", 1)
+#     if layers_width is None and hasattr(model, "width"):
+#         layers_width = model.width
+#     if layers_width is None:
+#         raise ValueError("Model must have 'layers_width' or 'width' attribute.")
+#     for i in range(len(layers_width) - 1):
+#         total_parameters += layer_parameters(layers_width[i][0], layers_width[i+1][0], shortcut_function_name, grid, k)
+#     return total_parameters
+
+FLOPs_MAP = {
+    "zero": 0,
+    "identity": 0,
+    "relu": 1,
+    'square_relu': 2,
+    "sigmoid": 4,
+    "silu": 5,
+    "tanh": 6,
+    "gelu": 14,
+    "polynomial2": 1 + 2 + 3 - 1,
+    "polynomial3": 1 + 2 + 3 + 4 - 1,
+    "polynomial5": 1 + 2 + 3 + 4 + 5 - 1,
+}
+
+def layer_flops(din, dout, shortcut_name, grid, k):
+    flops = (din * dout) * (9 * k * (grid + 1.5 * k) + 2 * grid - 2.5 * k + 1)
+    if shortcut_name == "zero":
+        shortcut_flops = 0
+    else:
+        shortcut_flops = FLOPs_MAP.get(shortcut_name, 0) * din + 2 * din * dout
+    return flops + shortcut_flops
+
+def layer_parameters(din, dout, shortcut_name, grid, k):
+    print("din:", din, "dout:", dout, "grid:", grid, "k:", k)
+    parameters = din * dout * (grid + k + 2) + dout
+    if shortcut_name == "zero":
+        shortcut_parameters = 0
+    else:
+        shortcut_parameters = din * dout
+    return parameters + shortcut_parameters
+
+def total_flops(model):
+    total_flops = 0
+    for act_fun in model.act_fun:
+        total_flops += layer_flops(act_fun.in_dim, act_fun.out_dim, act_fun.base_fun, act_fun.num, act_fun.k)
+    return total_flops
+
+def total_parameters(model):
+    total_parameters = 0
+    for act_fun in model.act_fun:
+        total_parameters += layer_parameters(act_fun.in_dim, act_fun.out_dim, act_fun.base_fun, act_fun.num, act_fun.k)
+    return total_parameters
+
+
+
