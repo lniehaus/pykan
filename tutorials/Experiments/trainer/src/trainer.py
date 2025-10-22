@@ -456,8 +456,11 @@ def main():
     #if args.hidden_width < 10 and args.hidden_depth < 10 and args.random_input_dim < 10 and args.random_output_dim < 10:
     # Only plot small Networks
     if not any(element > 10 for sublist in width for element in sublist):
-        model.plot(scale=1.0, folder=f"./figures/{args.experiment_name}/{run_id}_initialized", beta=100)
-        mlflow.log_figure(model.fig, "kan-splines-initialized.png")
+        try:
+            model.plot(scale=1.0, folder=f"./figures/{args.experiment_name}/{run_id}_initialized", beta=100)
+            mlflow.log_figure(model.fig, "kan-splines-initialized.png")
+        except Exception as e:
+            print(f"Failed to plot initialized model: {e}")
 
     def train_acc():
         if task == "classification":
@@ -592,8 +595,11 @@ def main():
     #if args.hidden_width < 10 and args.hidden_depth < 10 and args.random_input_dim < 10 and args.random_output_dim < 10:
     # Only plot small Networks
     if not any(element > 10 for sublist in width for element in sublist):
-        model.plot(scale=1.0, folder=f"./figures/{args.experiment_name}/{run_id}_trained", beta=100)
-        mlflow.log_figure(model.fig, "kan-splines-trained.png")
+        try:
+            model.plot(scale=1.0, folder=f"./figures/{args.experiment_name}/{run_id}_trained", beta=100)
+            mlflow.log_figure(model.fig, "kan-splines-trained.png")
+        except Exception as e:
+            print(f"Failed to plot trained model: {e}")
     
     fig = plot_predictions(
         model=model, 

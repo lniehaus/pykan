@@ -1,0 +1,1 @@
+ps -u luniehaus -o pid,command | grep -- '-m gunicorn' | awk '{print $1}' | xargs -r kill
