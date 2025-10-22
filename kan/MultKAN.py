@@ -850,12 +850,14 @@ class MultKAN(nn.Module):
         self.subnode_actscale = []
         self.edge_actscale = []
         # self.neurons_scale = []
+        self.residual_act = []
+        self.spline_act = []
 
         self.acts.append(x)  # acts shape: (batch, width[l])
 
         for l in range(self.depth):
             
-            x_numerical, preacts, postacts_numerical, postspline = self.act_fun[l](x)
+            x_numerical, preacts, postacts_numerical, postspline, residual_act, spline_act = self.act_fun[l](x)
             #print(preacts, postacts_numerical, postspline)
             
             if self.symbolic_enabled == True:
@@ -891,6 +893,17 @@ class MultKAN(nn.Module):
                 self.spline_postsplines.append(postspline.detach())
 
                 self.acts_premult.append(x.detach())
+
+                # # save residual connection with scale_base
+                # base = self.act_fun[l].base_fun(x)
+                # residual_act = self.act_fun[l].scale_base[None,:,:] * base[:,:,None]
+                # residual_act = self.act_fun[l].mask[None,:,:] * residual_act
+                self.residual_act.append(residual_act.detach())
+                # # save spline activations with scale_sp
+                # spline_act = self.act_fun[l].scale_sp[None,:,:] * x_numerical
+                # spline_act = self.act_fun[l].mask[None,:,:] * spline_act
+                self.spline_act.append(spline_act.detach())
+
             
             # multiplication
             dim_sum = self.width[l+1][0]

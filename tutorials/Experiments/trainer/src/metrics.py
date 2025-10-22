@@ -232,7 +232,7 @@ def layer_flops(din, dout, shortcut_name, grid, k):
     return flops + shortcut_flops
 
 def layer_parameters(din, dout, shortcut_name, grid, k):
-    print("din:", din, "dout:", dout, "grid:", grid, "k:", k)
+    #print("din:", din, "dout:", dout, "grid:", grid, "k:", k)
     parameters = din * dout * (grid + k + 2) + dout
     if shortcut_name == "zero":
         shortcut_parameters = 0

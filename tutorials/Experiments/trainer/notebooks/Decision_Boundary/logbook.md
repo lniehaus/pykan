@@ -59,3 +59,60 @@ http://127.0.0.1:9090/#/experiments/802285876068926351/runs/6af49a932e704069bbb2
 
 | train_loss: 2.80e-02 | test_loss: 1.02e-01 | reg: 0.00e+00 | :  10%| | 10178/100000 [03:32<32:39
 
+
+14.09.2025
+Spline Activations
+http://127.0.0.1:9099/#/experiments/987478017712724477/runs/d7ace100ca844b6d98c6effa597a0bda/artifacts
+The last layer creates super high activations, due to Sigmoid being added by the CrossEntropyLoss
+The networks tries to create very high output activations.
+this leads to the problem, that especially at the second to last layer a lot of activations are outside the spline grid and thus the spline does not add meaningful information
+is this one of the reasons, why deep KANs (depth: 20) are not possible, or why the accuracy drops of?
+Does Batch Normalization fix this issue and allow for deeper KANs?
+
+spiral preliminary capacity test
+http://127.0.0.1:9099/#/experiments/987478017712724477/runs/640df449ce204163897fb61f5bf0f15f/artifacts
+http://127.0.0.1:9099/#/experiments/987478017712724477/runs/69f945b0c30547bc8aa3ec8e3bc828b5/artifacts
+http://127.0.0.1:9099/#/experiments/987478017712724477/runs/fc819d92ebf245c4a046e27c6efcac43/artifacts
+http://127.0.0.1:9099/#/experiments/987478017712724477/runs/6fbe91f04d794767937331d3f69bd602/artifacts
+http://127.0.0.1:9099/#/experiments/987478017712724477/runs/d7ace100ca844b6d98c6effa597a0bda/artifacts
+http://127.0.0.1:9099/#/experiments/987478017712724477/runs/2ddacd4799fb4bd2a3f5fc1cfd1908db/artifacts
+http://127.0.0.1:9099/#/experiments/987478017712724477/runs/a9e8fed407bc4e6c882b3f4b65e0597c/artifacts
+http://127.0.0.1:9099/#/experiments/987478017712724477/runs/0c9ed4955bbf452fa3cf84056506dabe/artifacts
+
+
+edge_forward_spline_n
+1e-6
+http://127.0.0.1:9099/#/experiments/987478017712724477/runs/f600d2e2ba964222b79630b861e04805/artifacts
+1e-5
+http://127.0.0.1:9099/#/experiments/987478017712724477/runs/207fa6ad325444bcb86fe59a02c0e11e/artifacts
+1e-4
+http://127.0.0.1:9099/#/experiments/987478017712724477/runs/ba0ce07478dd4be3b30b499fbdb0b7b7/artifacts
+
+Cross Entropy vs. MSE
+depth_capacity_boxes_19
+
+
+MLFLOW ERROR
+  File "/home/student/l/luniehaus/cv_home/dev-uos/miniconda/envs/pykan/lib/python3.9/contextlib.py", line 126, in __exit__                                                                                                                                                                                                                                                                                                      [25/1940]
+    next(self.gen)                                                                                                                                                                                                                                                                                                                                                                                                                       
+  File "/home/student/l/luniehaus/cv_home/dev-uos/miniconda/envs/pykan/lib/python3.9/site-packages/mlflow/tracking/client.py", line 2070, in _log_artifact_helper                                                                                                                                                                                                                                                                        
+    self.log_artifact(run_id, tmp_path, artifact_dir)                                                                                                                                                                                                                                                                                                                                                                                    
+  File "/home/student/l/luniehaus/cv_home/dev-uos/miniconda/envs/pykan/lib/python3.9/site-packages/mlflow/tracking/client.py", line 2000, in log_artifact                                                                                                                                                                                                                                                                                
+    self._tracking_client.log_artifact(run_id, local_path, artifact_path)                                                                                                                                                                                                                                                                                                                                                                
+  File "/home/student/l/luniehaus/cv_home/dev-uos/miniconda/envs/pykan/lib/python3.9/site-packages/mlflow/tracking/_tracking_service/client.py", line 918, in log_artifact                                                                                                                                                                                                                                                               
+    artifact_repo = self._get_artifact_repo(run_id)                                                                                                                                                                                                                                                                                                                                                                                      
+  File "/home/student/l/luniehaus/cv_home/dev-uos/miniconda/envs/pykan/lib/python3.9/site-packages/mlflow/tracking/_tracking_service/client.py", line 901, in _get_artifact_repo                                                                                                                                                                                                                                                         
+    artifact_repo = get_artifact_repository(artifact_uri)                                                                                                                                                                                                                                                                                                                                                                                
+  File "/home/student/l/luniehaus/cv_home/dev-uos/miniconda/envs/pykan/lib/python3.9/site-packages/mlflow/store/artifact/artifact_repository_registry.py", line 131, in get_artifact_repository                                                                                                                                                                                                                                          
+    return _artifact_repository_registry.get_artifact_repository(artifact_uri)                                                                                                                                                                                                                                                                                                                                                           
+  File "/home/student/l/luniehaus/cv_home/dev-uos/miniconda/envs/pykan/lib/python3.9/site-packages/mlflow/store/artifact/artifact_repository_registry.py", line 76, in get_artifact_repository                                                                                                                                                                                                                                           
+    return repository(artifact_uri)
+  File "/home/student/l/luniehaus/cv_home/dev-uos/miniconda/envs/pykan/lib/python3.9/site-packages/mlflow/store/artifact/mlflow_artifacts_repo.py", line 51, in __init__
+    super().__init__(self.resolve_uri(artifact_uri, get_tracking_uri()))
+  File "/home/student/l/luniehaus/cv_home/dev-uos/miniconda/envs/pykan/lib/python3.9/site-packages/mlflow/store/artifact/mlflow_artifacts_repo.py", line 65, in resolve_uri
+    _validate_uri_scheme(track_parse)
+  File "/home/student/l/luniehaus/cv_home/dev-uos/miniconda/envs/pykan/lib/python3.9/site-packages/mlflow/store/artifact/mlflow_artifacts_repo.py", line 35, in _validate_uri_scheme
+    raise MlflowException(
+mlflow.exceptions.MlflowException: When an mlflow-artifacts URI was supplied, the tracking URI must be a valid http or https URI, but it was currently set to file:///net/store/cv/users/luniehaus/projects/pykan_experiments/pykan/tutorials/Experiments/trainer/mlruns. Perhaps you forgot to set the tracking URI to the running MLflow server. To set the tracking URI, use either of the following methods:
+1. Set the MLFLOW_TRACKING_URI environment variable to the desired tracking URI. `export MLFLOW_TRACKING_URI=http://localhost:5000`
+2. Set the tracking URI programmatically by calling `mlflow.set_tracking_uri`. `mlflow.set_tracking_uri('http://localhost:5000')`

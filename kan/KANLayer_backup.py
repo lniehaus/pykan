@@ -43,7 +43,7 @@ class KANLayer(nn.Module):
             device
     """
 
-    def __init__(self, in_dim=3, out_dim=2, num=5, k=3, noise_scale=0.5, scale_base_mu=0.0, scale_base_sigma=1.0, scale_sp=1.0, base_fun=torch.nn.SiLU(), grid_eps=0.02, grid_range=[-1, 1], sp_trainable=True, sb_trainable=True, save_plot_data = True, device='cpu', sparse_init=False, mode='default', init_mode="default", linear_mode=False):
+    def __init__(self, in_dim=3, out_dim=2, num=5, k=3, noise_scale=0.5, scale_base_mu=0.0, scale_base_sigma=1.0, scale_sp=1.0, base_fun=torch.nn.SiLU(), grid_eps=0.02, grid_range=[-1, 1], sp_trainable=True, sb_trainable=True, save_plot_data = True, device='cpu', sparse_init=False, mode='default', init_mode="default"):
         ''''
         initialize a KANLayer
         
@@ -79,9 +79,6 @@ class KANLayer(nn.Module):
                 device
             sparse_init : bool
                 if sparse_init = True, sparse initialization is applied.
-            linear_mode : bool
-                if True, uses only one coefficient per connection and forces k=0, 
-                resulting in simple multiplication rather than spline interpolation
             
         Returns:
         --------
@@ -97,24 +94,17 @@ class KANLayer(nn.Module):
         # size 
         self.out_dim = out_dim
         self.in_dim = in_dim
-        self.linear_mode = linear_mode
-        
-        # Force specific parameters for linear_mode
-        if self.linear_mode:
-            self.num = 1  # Only one interval
-            self.k = 0    # Degree 0 (piecewise constant)
-        else:
-            self.num = num
-            self.k = k
-        
+        self.num = num
+        self.k = k
         self.mode = mode
+        
 
-        grid = torch.linspace(grid_range[0], grid_range[1], steps=self.num + 1)[None,:].expand(self.in_dim, self.num+1)
+        grid = torch.linspace(grid_range[0], grid_range[1], steps=num + 1)[None,:].expand(self.in_dim, num+1)
         
         # print("grid.shape", grid.shape)
         # print("grid.shape data", grid)
 
-        grid = extend_grid(grid, k_extend=self.k)
+        grid = extend_grid(grid, k_extend=k)
 
         # save defined grid range and grid range extended by order
         self.grid_range = grid_range
@@ -130,97 +120,58 @@ class KANLayer(nn.Module):
         self.grid = torch.nn.Parameter(grid).requires_grad_(False)
 
         # CHANGED
-        if self.linear_mode:
-            # For single coefficient mode, initialize a simple coefficient tensor
-            # Shape: (in_dim, out_dim, 1) - one coefficient per input-output connection
-            if init_mode == 'default':
-                coef_init = (torch.rand(self.in_dim, self.out_dim, 1) - 0.5) * noise_scale
-            else:
-                # Use the same scaling logic as the noise initialization
-                if init_mode == 'default-0_1': 
-                    coef_init = (torch.rand(self.in_dim, self.out_dim, 1) - 0.5) * 0.1
-                elif init_mode == 'default-0_3':
-                    coef_init = (torch.rand(self.in_dim, self.out_dim, 1) - 0.5) * 0.3
-                elif init_mode == 'default-0_5':
-                    coef_init = (torch.rand(self.in_dim, self.out_dim, 1) - 0.5) * 0.5
-                elif init_mode == 'native_noise':
-                    coef_init = (torch.rand(self.in_dim, self.out_dim, 1) - 0.5) * 2.0 * noise_scale
-                elif init_mode == 'width_in':
-                    coef_init = (torch.rand(self.in_dim, self.out_dim, 1) - 0.5) * 2.0 * 1.0/in_dim
-                elif init_mode == 'width_out':
-                    coef_init = (torch.rand(self.in_dim, self.out_dim, 1) - 0.5) * 2.0 * 1.0/out_dim
-                elif init_mode == 'xavier_in':
-                    coef_init = (torch.rand(self.in_dim, self.out_dim, 1) - 0.5) * 2.0 * np.sqrt(1.0 / in_dim)
-                elif init_mode == 'xavier_out':
-                    coef_init = (torch.rand(self.in_dim, self.out_dim, 1) - 0.5) * 2.0 * np.sqrt(1.0 / out_dim)
-                elif init_mode == 'xavier_torch':
-                    coef_init = (torch.rand(self.in_dim, self.out_dim, 1) - 0.5) * 2.0 * 1.0 * np.sqrt(6.0) / np.sqrt(in_dim + out_dim)
-                elif init_mode == 'width_in_out':
-                    coef_init = (torch.rand(self.in_dim, self.out_dim, 1) - 0.5) * 2.0 * 2.0 / (in_dim+out_dim)
-                elif init_mode == 'xavier_in_out':
-                    coef_init = (torch.rand(self.in_dim, self.out_dim, 1) - 0.5) * 2.0 * np.sqrt(2.0 / (in_dim+out_dim))
-                elif init_mode == 'kaiming_in':
-                    coef_init = (torch.rand(self.in_dim, self.out_dim, 1) - 0.5) * 2.0 * np.sqrt(2.0 / in_dim)
-                elif init_mode == 'kaiming_in_out':
-                    coef_init = (torch.rand(self.in_dim, self.out_dim, 1) - 0.5) * 2.0 * np.sqrt(2.0 / (in_dim+out_dim))
-                else:
-                    # Default fallback
-                    coef_init = (torch.rand(self.in_dim, self.out_dim, 1) - 0.5) * noise_scale
-            
-            self.coef = torch.nn.Parameter(coef_init)
-        else:
-            # Original coefficient initialization code
-            if init_mode == 'default':
-                noises = (torch.rand(self.num+1, self.in_dim, self.out_dim) - 1/2) * noise_scale / self.num
-            elif init_mode == 'default-0_1': 
-                noises = (torch.rand(self.num+1, self.in_dim, self.out_dim) - 1/2) * 0.1 / self.num
-            elif init_mode == 'default-0_3':
-                noises = (torch.rand(self.num+1, self.in_dim, self.out_dim) - 1/2) * 0.3 / self.num
-            elif init_mode == 'default-0_5':
-                noises = (torch.rand(self.num+1, self.in_dim, self.out_dim) - 1/2) * 0.5 / self.num
-            elif init_mode == 'native_noise':
-                noises = (torch.rand(self.num+1, self.in_dim, self.out_dim) - 1/2) * 2.0 * noise_scale
-            elif init_mode == 'width_in':
-                noises = (torch.rand(self.num+1, self.in_dim, self.out_dim) - 1/2) * 2.0 * 1.0/in_dim
-            elif init_mode == 'width_out':
-                noises = (torch.rand(self.num+1, self.in_dim, self.out_dim) - 1/2) * 2.0 * 1.0/out_dim
-            elif init_mode == 'xavier_in':
-                #noises = (torch.rand(self.num+1, self.in_dim, self.out_dim) - 1/2) * 2.0 * 1.0 / np.sqrt(in_dim)
-                noises = (torch.rand(self.num+1, self.in_dim, self.out_dim) - 1/2) * 2.0 * np.sqrt(1.0 / in_dim)
-            elif init_mode == 'xavier_out':
-                #noises = (torch.rand(self.num+1, self.in_dim, self.out_dim) - 1/2) * 2.0 * 1.0 / np.sqrt(out_dim)
-                noises = (torch.rand(self.num+1, self.in_dim, self.out_dim) - 1/2) * 2.0 * np.sqrt(1.0 / out_dim)
-            elif init_mode == 'xavier_torch':
-                #noises = (torch.rand(self.num+1, self.in_dim, self.out_dim) - 1/2) * 2.0 * 1.0 * np.sqrt(6.0 / in_dim + out_dim)
-                noises = (torch.rand(self.num+1, self.in_dim, self.out_dim) - 1/2) * 2.0 * 1.0 * np.sqrt(6.0) / np.sqrt(in_dim + out_dim)
-            elif init_mode == 'width_in_num':
-                noises = (torch.rand(self.num+1, self.in_dim, self.out_dim) - 1/2) * 2.0 * 2.0 / (in_dim+self.num)
-            elif init_mode == 'xavier_in_num':
-                #noises = (torch.rand(self.num+1, self.in_dim, self.out_dim) - 1/2) * 2.0 * 2.0 / np.sqrt(in_dim+num)
-                noises = (torch.rand(self.num+1, self.in_dim, self.out_dim) - 1/2) * 2.0 * np.sqrt(2.0 / (in_dim+self.num))
-            elif init_mode == 'width_in_out':
-                noises = (torch.rand(self.num+1, self.in_dim, self.out_dim) - 1/2) * 2.0 * 2.0 / (in_dim+out_dim)
-            elif init_mode == 'xavier_in_out':
-                #noises = (torch.rand(self.num+1, self.in_dim, self.out_dim) - 1/2) * 2.0 * 2.0 / np.sqrt(in_dim+out_dim)
-                noises = (torch.rand(self.num+1, self.in_dim, self.out_dim) - 1/2) * 2.0 * np.sqrt(2.0 / (in_dim+out_dim))
-            elif init_mode == 'width_in_out_num':
-                noises = (torch.rand(self.num+1, self.in_dim, self.out_dim) - 1/2) * 2.0 * 3.0 / (in_dim+out_dim+self.num)
-            elif init_mode == 'xavier_in_out_num':
-                #noises = (torch.rand(self.num+1, self.in_dim, self.out_dim) - 1/2) * 2.0 * 3.0 / np.sqrt(in_dim+out_dim+num)
-                #noises = (torch.rand(self.num+1, self.in_dim, self.out_dim) - 1/2) * 2.0 * np.sqrt(3.0 / in_dim+out_dim+num)
-                noises = (torch.rand(self.num+1, self.in_dim, self.out_dim) - 1/2) * 2.0 * np.sqrt(2.0 / (in_dim+out_dim+self.num))
-            elif init_mode == 'kaiming_in':
-                #noises = (torch.rand(self.num+1, self.in_dim, self.out_dim) - 1/2) * 2.0 * np.sqrt(3.0 / in_dim)
-                noises = (torch.rand(self.num+1, self.in_dim, self.out_dim) - 1/2) * 2.0 * np.sqrt(2.0 / in_dim)
-            elif init_mode == 'kaiming_in_out':
-                #noises = (torch.rand(self.num+1, self.in_dim, self.out_dim) - 1/2) * 2.0 * np.sqrt(3.0 / in_dim+out_dim)
-                noises = (torch.rand(self.num+1, self.in_dim, self.out_dim) - 1/2) * 2.0 * np.sqrt(2.0 / (in_dim+out_dim))
-            elif init_mode == 'kaiming_leaky_in':
-                noises = (torch.rand(self.num+1, self.in_dim, self.out_dim) - 1/2) * 2.0 * np.sqrt(2/(1+(np.sqrt(5)**2))) * np.sqrt(3.0 / in_dim)
-            elif init_mode == 'kaiming_leaky_in_out':
-                noises = (torch.rand(self.num+1, self.in_dim, self.out_dim) - 1/2) * 2.0 * np.sqrt(2/(1+(np.sqrt(5)**2))) * np.sqrt(3.0 / (in_dim+out_dim))
+        if init_mode == 'default':
+            noises = (torch.rand(self.num+1, self.in_dim, self.out_dim) - 1/2) * noise_scale / num
+        elif init_mode == 'default-0_1': 
+            noises = (torch.rand(self.num+1, self.in_dim, self.out_dim) - 1/2) * 0.1 / num
+        elif init_mode == 'default-0_3':
+            noises = (torch.rand(self.num+1, self.in_dim, self.out_dim) - 1/2) * 0.3 / num
+        elif init_mode == 'default-0_5':
+            noises = (torch.rand(self.num+1, self.in_dim, self.out_dim) - 1/2) * 0.5 / num
+        elif init_mode == 'native_noise':
+            noises = (torch.rand(self.num+1, self.in_dim, self.out_dim) - 1/2) * 2.0 * noise_scale
+        elif init_mode == 'width_in':
+            noises = (torch.rand(self.num+1, self.in_dim, self.out_dim) - 1/2) * 2.0 * 1.0/in_dim
+        elif init_mode == 'width_out':
+            noises = (torch.rand(self.num+1, self.in_dim, self.out_dim) - 1/2) * 2.0 * 1.0/out_dim
+        elif init_mode == 'xavier_in':
+            #noises = (torch.rand(self.num+1, self.in_dim, self.out_dim) - 1/2) * 2.0 * 1.0 / np.sqrt(in_dim)
+            noises = (torch.rand(self.num+1, self.in_dim, self.out_dim) - 1/2) * 2.0 * np.sqrt(1.0 / in_dim)
+        elif init_mode == 'xavier_out':
+            #noises = (torch.rand(self.num+1, self.in_dim, self.out_dim) - 1/2) * 2.0 * 1.0 / np.sqrt(out_dim)
+            noises = (torch.rand(self.num+1, self.in_dim, self.out_dim) - 1/2) * 2.0 * np.sqrt(1.0 / out_dim)
+        elif init_mode == 'xavier_torch':
+            #noises = (torch.rand(self.num+1, self.in_dim, self.out_dim) - 1/2) * 2.0 * 1.0 * np.sqrt(6.0 / in_dim + out_dim)
+            noises = (torch.rand(self.num+1, self.in_dim, self.out_dim) - 1/2) * 2.0 * 1.0 * np.sqrt(6.0) / np.sqrt(in_dim + out_dim)
+        elif init_mode == 'width_in_num':
+            noises = (torch.rand(self.num+1, self.in_dim, self.out_dim) - 1/2) * 2.0 * 2.0 / (in_dim+num)
+        elif init_mode == 'xavier_in_num':
+            #noises = (torch.rand(self.num+1, self.in_dim, self.out_dim) - 1/2) * 2.0 * 2.0 / np.sqrt(in_dim+num)
+            noises = (torch.rand(self.num+1, self.in_dim, self.out_dim) - 1/2) * 2.0 * np.sqrt(2.0 / in_dim+num)
+        elif init_mode == 'width_in_out':
+            noises = (torch.rand(self.num+1, self.in_dim, self.out_dim) - 1/2) * 2.0 * 2.0 / (in_dim+out_dim)
+        elif init_mode == 'xavier_in_out':
+            #noises = (torch.rand(self.num+1, self.in_dim, self.out_dim) - 1/2) * 2.0 * 2.0 / np.sqrt(in_dim+out_dim)
+            noises = (torch.rand(self.num+1, self.in_dim, self.out_dim) - 1/2) * 2.0 * np.sqrt(2.0 / in_dim+out_dim)
+        elif init_mode == 'width_in_out_num':
+            noises = (torch.rand(self.num+1, self.in_dim, self.out_dim) - 1/2) * 2.0 * 3.0 / (in_dim+out_dim+num)
+        elif init_mode == 'xavier_in_out_num':
+            #noises = (torch.rand(self.num+1, self.in_dim, self.out_dim) - 1/2) * 2.0 * 3.0 / np.sqrt(in_dim+out_dim+num)
+            #noises = (torch.rand(self.num+1, self.in_dim, self.out_dim) - 1/2) * 2.0 * np.sqrt(3.0 / in_dim+out_dim+num)
+            noises = (torch.rand(self.num+1, self.in_dim, self.out_dim) - 1/2) * 2.0 * np.sqrt(2.0 / in_dim+out_dim+num)
+        elif init_mode == 'kaiming_in':
+            #noises = (torch.rand(self.num+1, self.in_dim, self.out_dim) - 1/2) * 2.0 * np.sqrt(3.0 / in_dim)
+            noises = (torch.rand(self.num+1, self.in_dim, self.out_dim) - 1/2) * 2.0 * np.sqrt(2.0 / in_dim)
+        elif init_mode == 'kaiming_in_out':
+            #noises = (torch.rand(self.num+1, self.in_dim, self.out_dim) - 1/2) * 2.0 * np.sqrt(3.0 / in_dim+out_dim)
+            noises = (torch.rand(self.num+1, self.in_dim, self.out_dim) - 1/2) * 2.0 * np.sqrt(2.0 / in_dim+out_dim)
+        elif init_mode == 'kaiming_leaky_in':
+            noises = (torch.rand(self.num+1, self.in_dim, self.out_dim) - 1/2) * 2.0 * np.sqrt(2/(1+(np.sqrt(5)**2))) * np.sqrt(3.0 / in_dim)
+        elif init_mode == 'kaiming_leaky_in_out':
+            noises = (torch.rand(self.num+1, self.in_dim, self.out_dim) - 1/2) * 2.0 * np.sqrt(2/(1+(np.sqrt(5)**2))) * np.sqrt(3.0 / in_dim+out_dim)
 
-            self.coef = torch.nn.Parameter(curve2coef(self.grid[:,self.k:-self.k].permute(1,0), noises, self.grid, self.k))
+
+        self.coef = torch.nn.Parameter(curve2coef(self.grid[:,k:-k].permute(1,0), noises, self.grid, k))
 
         
         if sparse_init:
@@ -275,11 +226,11 @@ class KANLayer(nn.Module):
         # CHANGED
         #x = torch.tanh(x)
 
-        if self.mode=='default':
-            pass
-        else:
-            x = torch.tanh(x)
-            pass
+        # if self.mode=='default':
+        #     pass
+        # else:
+        #     x = torch.tanh(x)
+        #     pass
      
         batch = x.shape[0]
         preacts = x[:,None,:].clone().expand(batch, self.out_dim, self.in_dim)
@@ -287,33 +238,21 @@ class KANLayer(nn.Module):
      
         base = self.base_fun(x) # (batch, in_dim)
 
-        if self.linear_mode:
-            # Simple multiplication: each input multiplied by its coefficient
-            # coef shape: (in_dim, out_dim, 1), x shape: (batch, in_dim)
-            # We want output shape: (batch, in_dim, out_dim)
-            y = x[:, :, None] * self.coef[None, :, :, 0]  # (batch, in_dim, out_dim)
+        #y = coef2curve(x_eval=x, grid=self.grid, coef=self.coef, k=self.k)
+        if self.mode == 'default':
+            y = coef2curve(x_eval=x, grid=self.grid, coef=self.coef, k=self.k)
         else:
-            # Original spline computation
-            if self.mode == 'default':
-                y = coef2curve(x_eval=x, grid=self.grid, coef=self.coef, k=self.k)
-            else:
-                y = coef2curve_monotonic(x_eval=x, grid=self.grid, coef=self.coef, k=self.k, mode=self.mode)
+            y = coef2curve_monotonic(x_eval=x, grid=self.grid, coef=self.coef, k=self.k, mode=self.mode)
         
         postspline = y.clone().permute(0,2,1)
         
-        # print("self.scale_base.shape", self.scale_base.shape, "self.scale_sp.shape", self.scale_sp.shape)
-        # y = self.scale_base[None,:,:] * base[:,:,None] + self.scale_sp[None,:,:] * y
-
-
-        residual_act = self.scale_base[None,:,:] * base[:,:,None]
-        spline_act = self.scale_sp[None,:,:] * y
-        y = residual_act + spline_act
+        y = self.scale_base[None,:,:] * base[:,:,None] + self.scale_sp[None,:,:] * y
         y = self.mask[None,:,:] * y
         
         postacts = y.clone().permute(0,2,1)
-
+            
         y = torch.sum(y, dim=1)
-        return y, preacts, postacts, postspline, residual_act, spline_act
+        return y, preacts, postacts, postspline
 
     def update_grid_from_samples(self, x, mode='sample'):
         '''
@@ -336,10 +275,6 @@ class KANLayer(nn.Module):
         >>> model.update_grid_from_samples(x)
         >>> print(model.grid.data)
         '''
-        
-        # Skip grid updates in single coefficient mode
-        if self.linear_mode:
-            return
         
         batch = x.shape[0]
         #x = torch.einsum('ij,k->ikj', x, torch.ones(self.out_dim, ).to(self.device)).reshape(batch, self.size).permute(1, 0)
@@ -404,10 +339,6 @@ class KANLayer(nn.Module):
         >>> print(model.grid.data)
         '''
         
-        # Skip grid updates in single coefficient mode
-        if self.linear_mode:
-            return
-            
         batch = x.shape[0]
         
         # shrink grid
@@ -487,12 +418,9 @@ class KANLayer(nn.Module):
         >>> kanlayer_small.in_dim, kanlayer_small.out_dim
         (2, 3)
         '''
-        spb = KANLayer(len(in_id), len(out_id), self.num, self.k, base_fun=self.base_fun, linear_mode=self.linear_mode)
+        spb = KANLayer(len(in_id), len(out_id), self.num, self.k, base_fun=self.base_fun)
         spb.grid.data = self.grid[in_id]
-        if self.linear_mode:
-            spb.coef.data = self.coef[in_id][:,out_id,:]  # Keep the last dimension for linear_mode
-        else:
-            spb.coef.data = self.coef[in_id][:,out_id]
+        spb.coef.data = self.coef[in_id][:,out_id]
         spb.scale_base.data = self.scale_base[in_id][:,out_id]
         spb.scale_sp.data = self.scale_sp[in_id][:,out_id]
         spb.mask.data = self.mask[in_id][:,out_id]

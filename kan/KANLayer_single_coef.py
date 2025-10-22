@@ -43,7 +43,7 @@ class KANLayer(nn.Module):
             device
     """
 
-    def __init__(self, in_dim=3, out_dim=2, num=5, k=3, noise_scale=0.5, scale_base_mu=0.0, scale_base_sigma=1.0, scale_sp=1.0, base_fun=torch.nn.SiLU(), grid_eps=0.02, grid_range=[-1, 1], sp_trainable=True, sb_trainable=True, save_plot_data = True, device='cpu', sparse_init=False, mode='default', init_mode="default", linear_mode=False):
+    def __init__(self, in_dim=3, out_dim=2, num=5, k=3, noise_scale=0.5, scale_base_mu=0.0, scale_base_sigma=1.0, scale_sp=1.0, base_fun=torch.nn.SiLU(), grid_eps=0.02, grid_range=[-1, 1], sp_trainable=True, sb_trainable=True, save_plot_data = True, device='cpu', sparse_init=False, mode='default', init_mode="default", single_coef_mode=False):
         ''''
         initialize a KANLayer
         
@@ -79,7 +79,7 @@ class KANLayer(nn.Module):
                 device
             sparse_init : bool
                 if sparse_init = True, sparse initialization is applied.
-            linear_mode : bool
+            single_coef_mode : bool
                 if True, uses only one coefficient per connection and forces k=0, 
                 resulting in simple multiplication rather than spline interpolation
             
@@ -97,10 +97,10 @@ class KANLayer(nn.Module):
         # size 
         self.out_dim = out_dim
         self.in_dim = in_dim
-        self.linear_mode = linear_mode
+        self.single_coef_mode = single_coef_mode
         
-        # Force specific parameters for linear_mode
-        if self.linear_mode:
+        # Force specific parameters for single coefficient mode
+        if self.single_coef_mode:
             self.num = 1  # Only one interval
             self.k = 0    # Degree 0 (piecewise constant)
         else:
@@ -111,8 +111,8 @@ class KANLayer(nn.Module):
 
         grid = torch.linspace(grid_range[0], grid_range[1], steps=self.num + 1)[None,:].expand(self.in_dim, self.num+1)
         
-        # print("grid.shape", grid.shape)
-        # print("grid.shape data", grid)
+        print("grid.shape", grid.shape)
+        print("grid.shape data", grid)
 
         grid = extend_grid(grid, k_extend=self.k)
 
@@ -124,13 +124,13 @@ class KANLayer(nn.Module):
         # print("self.grid_range_extended", self.grid_range_extended)
 
 
-        # print("grid.shape extended", grid.shape)
-        # print("grid.shape extended data", grid)
+        print("grid.shape extended", grid.shape)
+        print("grid.shape extended data", grid)
 
         self.grid = torch.nn.Parameter(grid).requires_grad_(False)
 
         # CHANGED
-        if self.linear_mode:
+        if self.single_coef_mode:
             # For single coefficient mode, initialize a simple coefficient tensor
             # Shape: (in_dim, out_dim, 1) - one coefficient per input-output connection
             if init_mode == 'default':
@@ -275,11 +275,11 @@ class KANLayer(nn.Module):
         # CHANGED
         #x = torch.tanh(x)
 
-        if self.mode=='default':
-            pass
-        else:
-            x = torch.tanh(x)
-            pass
+        # if self.mode=='default':
+        #     pass
+        # else:
+        #     x = torch.tanh(x)
+        #     pass
      
         batch = x.shape[0]
         preacts = x[:,None,:].clone().expand(batch, self.out_dim, self.in_dim)
@@ -287,7 +287,7 @@ class KANLayer(nn.Module):
      
         base = self.base_fun(x) # (batch, in_dim)
 
-        if self.linear_mode:
+        if self.single_coef_mode:
             # Simple multiplication: each input multiplied by its coefficient
             # coef shape: (in_dim, out_dim, 1), x shape: (batch, in_dim)
             # We want output shape: (batch, in_dim, out_dim)
@@ -301,19 +301,13 @@ class KANLayer(nn.Module):
         
         postspline = y.clone().permute(0,2,1)
         
-        # print("self.scale_base.shape", self.scale_base.shape, "self.scale_sp.shape", self.scale_sp.shape)
-        # y = self.scale_base[None,:,:] * base[:,:,None] + self.scale_sp[None,:,:] * y
-
-
-        residual_act = self.scale_base[None,:,:] * base[:,:,None]
-        spline_act = self.scale_sp[None,:,:] * y
-        y = residual_act + spline_act
+        y = self.scale_base[None,:,:] * base[:,:,None] + self.scale_sp[None,:,:] * y
         y = self.mask[None,:,:] * y
         
         postacts = y.clone().permute(0,2,1)
-
+            
         y = torch.sum(y, dim=1)
-        return y, preacts, postacts, postspline, residual_act, spline_act
+        return y, preacts, postacts, postspline
 
     def update_grid_from_samples(self, x, mode='sample'):
         '''
@@ -338,7 +332,7 @@ class KANLayer(nn.Module):
         '''
         
         # Skip grid updates in single coefficient mode
-        if self.linear_mode:
+        if self.single_coef_mode:
             return
         
         batch = x.shape[0]
@@ -405,7 +399,7 @@ class KANLayer(nn.Module):
         '''
         
         # Skip grid updates in single coefficient mode
-        if self.linear_mode:
+        if self.single_coef_mode:
             return
             
         batch = x.shape[0]
@@ -487,10 +481,10 @@ class KANLayer(nn.Module):
         >>> kanlayer_small.in_dim, kanlayer_small.out_dim
         (2, 3)
         '''
-        spb = KANLayer(len(in_id), len(out_id), self.num, self.k, base_fun=self.base_fun, linear_mode=self.linear_mode)
+        spb = KANLayer(len(in_id), len(out_id), self.num, self.k, base_fun=self.base_fun, single_coef_mode=self.single_coef_mode)
         spb.grid.data = self.grid[in_id]
-        if self.linear_mode:
-            spb.coef.data = self.coef[in_id][:,out_id,:]  # Keep the last dimension for linear_mode
+        if self.single_coef_mode:
+            spb.coef.data = self.coef[in_id][:,out_id,:]  # Keep the last dimension for single_coef_mode
         else:
             spb.coef.data = self.coef[in_id][:,out_id]
         spb.scale_base.data = self.scale_base[in_id][:,out_id]

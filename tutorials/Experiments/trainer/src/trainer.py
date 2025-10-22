@@ -8,9 +8,10 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 from datasets import random_data, moon_data, mnist_data, cifar10_data, make_classification_data, mnist1d_data, boxes_2d_dataset, spiral_data, and_data, or_data, xor_data
-from plotter import plot_train_data, plot_predictions, plot_violins, plot_violins_extended, plot_summed_violins, plot_mean_std, plot_layerwise_postacts_and_postsplines, generate_grid_tensor, plot_decision_boundary, plot_heatmap, plot_classifier_probes
+from plotter import plot_train_data, plot_predictions, plot_violins, plot_violins_extended, plot_summed_violins, plot_mean_std, plot_layerwise_postacts_and_postsplines, plot_layerwise_residual_and_spline_activations, generate_grid_tensor, plot_decision_boundary, plot_heatmap, plot_classifier_probes
 from video import create_video
 from metrics import count_connected_regions, count_artifacts, calc_boundary_length, calc_boundary_curvature, calc_fractal_dimension, total_flops, total_parameters
+from tqdm import tqdm
 
 # SYMBOLIC FORMULA
 def symbolic_regression(model, dataset):
@@ -353,6 +354,12 @@ def main():
     )
     mlflow.log_figure(fig, "layerwise_postacts_and_postsplines-initialized.png")
 
+    fig = plot_layerwise_residual_and_spline_activations(
+        model=model,
+        title=f"Layerwise Residual & Spline Activations - Width: {args.hidden_width}, Init Mode: {args.init_mode}"
+    )
+    mlflow.log_figure(fig, "layerwise_residual_and_spline_activations-initialized.png")
+
     # Update plot_violins call
     fig = plot_violins(
         model=model, 
@@ -368,13 +375,6 @@ def main():
         mode='act'
     )
     mlflow.log_figure(fig, "kan-act-violins-initialized.png")
-    # fig = plot_violins(
-    #     model=model, 
-    #     sample_size=10_000, 
-    #     title=f"Train Accuracy: Width: {args.hidden_width}, Init Mode: {args.init_mode}",
-    #     mode='grad'
-    # )
-    # mlflow.log_figure(fig, "kan-grad-violins-initialized.png")
 
     # # Update plot_violins_extended call
     # fig = plot_violins_extended(
@@ -463,17 +463,6 @@ def main():
                         )
     print(f"train_acc: {results['train_acc'][-1]:2f}, test_acc: {results['test_acc'][-1]:2f}")
 
-    # # Log Fitting Results in mlflow
-    # for i in range(len(results['train_acc'])):
-    #     for key in results.keys():
-    #         mlflow.log_metric(key, results[key][i], step=i)
-    #         #mlflow.log_metric(key, results[key][i], step=i, synchronous=False)
-
-    # Log Fitting Results in mlflow using log_metrics
-    for i in range(len(results['train_acc'])):
-        step_metrics = {key: results[key][i] for key in results.keys()}
-        mlflow.log_metrics(step_metrics, step=i)
-
 
     mlflow.log_metric("train_acc_max", max(results['train_acc']), step=0)
     mlflow.log_metric("test_acc_max", max(results['test_acc']), step=0)
@@ -493,24 +482,30 @@ def main():
     )
     mlflow.log_figure(fig, "layerwise_postacts_and_postsplines-trained.png")
 
+    fig = plot_layerwise_residual_and_spline_activations(
+        model=model,
+        title=f"Layerwise Residual & Spline Activations - Train Acc: {max(results['train_acc']):.2f}, Width: {args.hidden_width}, Init Mode: {args.init_mode}"
+    )
+    mlflow.log_figure(fig, "layerwise_residual_and_spline_activations-trained.png")
+
     fig = plot_violins(
         model=model, 
         sample_size=10_000, 
-        title=f"Train Accuracy: {max(results['train_acc']):.2f}, Width: {args.hidden_width}, Init Mode: {args.init_mode}",
+        title=f"Train Accuracy: {results['train_acc'][-1]:.2f}, Width: {args.hidden_width}, Init Mode: {args.init_mode}",
         mode='coef'
     )
     mlflow.log_figure(fig, "kan-coef-violins-trained.png")
     fig = plot_violins(
         model=model, 
         sample_size=10_000, 
-        title=f"Train Accuracy: {max(results['train_acc']):.2f}, Width: {args.hidden_width}, Init Mode: {args.init_mode}",
+        title=f"Train Accuracy: {results['train_acc'][-1]:.2f}, Width: {args.hidden_width}, Init Mode: {args.init_mode}",
         mode='act'
     )
     mlflow.log_figure(fig, "kan-act-violins-trained.png")
     fig = plot_violins(
         model=model, 
         sample_size=10_000, 
-        title=f"Train Accuracy: {max(results['train_acc']):.2f}, Width: {args.hidden_width}, Init Mode: {args.init_mode}",
+        title=f"Train Accuracy: {results['train_acc'][-1]:.2f}, Width: {args.hidden_width}, Init Mode: {args.init_mode}",
         mode='grad'
     )
     mlflow.log_figure(fig, "kan-grad-violins-trained.png")
@@ -571,6 +566,7 @@ def main():
 
     # Symbolic Refgression
     if args.symbolic_regression:
+        print("Symbolic Regression of the trained model")
         train_acc_formula, test_acc_formula = symbolic_regression(model, dataset)
         print('train acc of the formula:', train_acc_formula)
         print('test acc of the formula:', test_acc_formula)
@@ -637,6 +633,7 @@ def main():
 
 
     if input_dim == 2:
+        print("2D Input - Calculate Decision Boundary Metrics")
         bounds = (dataset['train_input'][:,0].min().item(), dataset['train_input'][:,0].max().item(), dataset['train_input'][:,1].min().item(), dataset['train_input'][:,1].max().item())
         grid_tensor, xx, yy = generate_grid_tensor(bounds=bounds, resolution=1000, device=device, dtype=torch.FloatTensor)
 
@@ -672,7 +669,18 @@ def main():
             dataset=dataset,
             xx=xx,
             yy=yy,
-            title=f"Output Decision Boundary - Train Acc: {results['train_acc'][-1]:.2f}, Test Acc: {results['test_acc'][-1]:.2f}"
+            title=f"Output Decision Boundary - Train Acc: {results['train_acc'][-1]:.2f}, Test Acc: {results['test_acc'][-1]:.2f}",
+            plot_datapoints=True
+        )
+        mlflow.log_figure(fig, "output_decision_boundary_with_datapoints.png")
+
+        fig = plot_decision_boundary(
+            pred = pred,
+            dataset=dataset,
+            xx=xx,
+            yy=yy,
+            title=f"Output Decision Boundary - Train Acc: {results['train_acc'][-1]:.2f}, Test Acc: {results['test_acc'][-1]:.2f}",
+            plot_datapoints=False
         )
         mlflow.log_figure(fig, "output_decision_boundary.png")
 
@@ -696,6 +704,8 @@ def main():
         train_label = torch.round(dataset['train_label'][:, 0] * (n_classes - 1)).long()
         test_label = torch.round(dataset['test_label'][:, 0] * (n_classes - 1)).long()
 
+    print("Classifier Probes: Train")
+
     fig = plot_classifier_probes(
         model=model, 
         train_input=dataset['train_input'], 
@@ -706,6 +716,8 @@ def main():
     )
     mlflow.log_figure(fig, "classifier_probes_train.png")
 
+
+    print("Classifier Probes: Test")
     fig = plot_classifier_probes(
         model=model, 
         train_input=dataset['train_input'], 
@@ -715,6 +727,11 @@ def main():
         title="Layerwise Classifier Probes Test evaluation"
     )
     mlflow.log_figure(fig, "classifier_probes_test.png")
+
+    # Log Fitting Results in mlflow using log_metrics
+    for i in tqdm(range(len(results['train_acc'])), desc="Logging metrics to mlflow"):
+        step_metrics = {key: results[key][i] for key in results.keys()}
+        mlflow.log_metrics(step_metrics, step=i)
 
     mlflow.end_run()
     

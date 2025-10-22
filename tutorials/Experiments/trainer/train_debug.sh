@@ -1,26 +1,30 @@
 #!/bin/bash
 
 # Utility
-export experiment_name="train-debug-4"
-export device_index=1
+export experiment_name="train-debug-5"
+export device_index=0
 export seed=0
 # Model
 export hidden_form='square'
 #export hidden_form='linear'
 #export hidden_form='kat'
 export hidden_width=2
-export hidden_depth=2
+#export hidden_width=5
+export hidden_depth=50
 #export hidden_depth=10
 #export hidden_depth=5
-export steps=100 # 10_000
+export steps=1000 # 10_000
 export grid=5
 #export grid=40
 #export grid=3
 export k=3
 #export k=5
 export mode='default'
-export spline_noise_scale=0.3
-export init_mode='default'
+#export mode='tanh'
+#export spline_noise_scale=0.3
+export spline_noise_scale=0.45
+export init_mode='native_noise'
+#export init_mode='default'
 #export init_mode='default-0_1'
 #export init_mode='default-0_5'
 #export init_mode='xavier_in_out'
@@ -28,15 +32,16 @@ export init_mode='default'
 #export init_mode='kaiming_in'
 #export init_mode='xavier_torch'
 export grid_mode='default'
+export grid_mode='native'
 #export grid_mode='xavier'
 #export grid_mode='xavier_10'
 #export grid_mode='xavier_x'
-export grid_bound=2.0
+export grid_bound=1.0
 #export grid_mode='xavier'
 #export grid_mode='xavier_10'
 #export learning_rate=1.0
 #export learning_rate=0.001
-export learning_rate=1e-2
+export learning_rate=1e-3
 export lamb=0.0
 #export lamb=1.0
 #export lamb=0.5
@@ -54,19 +59,20 @@ export reg_metric='edge_forward_spline_n'
 #export reg_metric='edge_forward_spline_u'
 #export reg_metric='edge_backward'
 #export reg_metric='node_backward'
-export optimizer='LBFGS' # Adam LBFGS
-#export optimizer='Adam'
+#export optimizer='LBFGS' # Adam LBFGS
+export optimizer='Adam'
 
 # Trainable On
 export base_fun='silu'
-export sp_trainable=true
-export sb_trainable=true
+#export base_fun='zero'
+# export sp_trainable=true
+# export sb_trainable=true
 #export affine_trainable=true
 #export update_grid=true
 # Trainable Off
 # export base_fun='zero'
-# export sp_trainable=false
-# export sb_trainable=false
+export sp_trainable=false
+export sb_trainable=false
 export affine_trainable=false
 export update_grid=false
 
@@ -100,8 +106,8 @@ export spiral_n_samples=$((spiral_n_classes * 500))
 export spiral_noise=0.0
 export task='classification'
 #export task='regression'
-#export output_layer_mode='default'
-export output_layer_mode='linear'
+export output_layer_mode='default'
+#export output_layer_mode='linear'
 export classification_loss='cross_entropy'
 #export classification_loss='mse'
 

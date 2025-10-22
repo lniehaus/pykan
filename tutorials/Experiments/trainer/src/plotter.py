@@ -90,6 +90,8 @@ def plot_mean_std(model, title):
     act_summed_stds = []
     coef_means = []
     coef_stds = []
+    grad_means = []
+    grad_stds = []
 
     for layer_index, (act_fun, preacts, postacts, postsplines) in enumerate(zip(model.act_fun, model.spline_preacts, model.spline_postacts, model.spline_postsplines)):
         coef = act_fun.coef
@@ -103,8 +105,15 @@ def plot_mean_std(model, title):
 
             coef_means.append(coef.mean().cpu().numpy())
             coef_stds.append(coef.std().cpu().numpy())
+            
+            if coef.grad is not None:
+                grad_means.append(coef.grad.mean().cpu().numpy())
+                grad_stds.append(coef.grad.std().cpu().numpy())
+            else:
+                grad_means.append(0.0)
+                grad_stds.append(0.0)
 
-    fig, axs = plt.subplots(3,2,figsize=(12,6))
+    fig, axs = plt.subplots(4,2,figsize=(12,9))
     axs[0][0].plot(act_means, label=f"Act Means: {np.mean(act_means):2e}")
     axs[0][0].set_title(title)
     axs[0][0].set_xlabel("Layer Index")
@@ -137,6 +146,17 @@ def plot_mean_std(model, title):
     axs[2][1].set_xlabel("Layer Index")
     axs[2][1].set_ylabel("Standard Deviation")
     axs[2][1].legend()
+
+    axs[3][0].plot(grad_means, label=f"Coef Grad Means: {np.mean(grad_means):2e}")
+    axs[3][0].set_title(title)
+    axs[3][0].set_xlabel("Layer Index")
+    axs[3][0].set_ylabel("Mean Value")
+    axs[3][0].legend()
+    axs[3][1].plot(grad_stds, label=f"Coef Grad Stds: {np.mean(grad_stds):2e}")
+    axs[3][1].set_title(title)
+    axs[3][1].set_xlabel("Layer Index")
+    axs[3][1].set_ylabel("Standard Deviation")
+    axs[3][1].legend()
 
     plt.tight_layout()
     return fig
@@ -337,6 +357,48 @@ def plot_layerwise_postacts_and_postsplines(model, title, sample_size=100):
     plt.tight_layout()
     return plt.gcf()
 
+
+def plot_layerwise_residual_and_spline_activations(model, title, sample_size=100):
+    """
+    Plots a violin plot for each layer, showing both residual activations going through base_fun and spline activations as separate violins.
+    """
+    data = []
+    for layer_index, (residual_act, spline_act) in enumerate(zip(model.residual_act, model.spline_act)):
+        # Flatten and sample residual_act
+        residual_act_np = residual_act.cpu().detach().numpy().flatten()
+        if len(residual_act_np) > sample_size:
+            sampled_residual_act = np.random.choice(residual_act_np, sample_size, replace=False)
+        else:
+            sampled_residual_act = residual_act_np
+        data.extend([(layer_index, act, 'residual_act') for act in sampled_residual_act])
+
+        # Flatten and sample spline_act
+        spline_act_np = spline_act.cpu().detach().numpy().flatten()
+        if len(spline_act_np) > sample_size:
+            sampled_spline_act = np.random.choice(spline_act_np, sample_size, replace=False)
+        else:
+            sampled_spline_act = spline_act_np
+        data.extend([(layer_index, act, 'spline_act') for act in sampled_spline_act])
+
+    # Create DataFrame
+    df = pd.DataFrame(data, columns=['Layer', 'Activation', 'Type'])
+
+    plt.figure(figsize=(12, 6))
+    sns.violinplot(data=df,
+                   x="Layer",
+                   y="Activation",
+                   hue="Type",
+                   split=True,
+                   inner="quart",
+                   gap=0.1,
+                   palette={"residual_act": "skyblue", "spline_act": "orange"}
+                   )
+    plt.title(title)
+    plt.xlabel('Layer')
+    plt.ylabel('Activation')
+    plt.tight_layout()
+    return plt.gcf()
+
 def generate_grid_tensor(bounds=(-1, 1, -1, 1), resolution=1000, device='cpu', dtype=torch.FloatTensor):
     xx, yy = np.meshgrid(
         np.linspace(bounds[0] - 0.1, bounds[1] + 0.1, resolution),
@@ -362,7 +424,7 @@ def generate_grid_tensor(bounds=(-1, 1, -1, 1), resolution=1000, device='cpu', d
 #     #plt.show()
 #     return plt.gcf()
 
-def plot_decision_boundary(pred, dataset, xx, yy, title="Decision Boundary"):
+def plot_decision_boundary(pred, dataset, xx, yy, title="Decision Boundary", plot_datapoints=True):
     # Determine unique classes and set up colormap
     train_labels = dataset['train_label'].cpu().numpy().flatten()
     test_labels = dataset['test_label'].cpu().numpy().flatten()
@@ -381,12 +443,13 @@ def plot_decision_boundary(pred, dataset, xx, yy, title="Decision Boundary"):
         pred = np.argmax(pred, axis=-1)
     plt.contourf(xx, yy, pred, alpha=0.3, levels=np.arange(n_classes+1)-0.5, cmap=cmap)
 
-    # Scatter train points
-    plt.scatter(dataset['train_input'][:, 0].cpu(), dataset['train_input'][:, 1].cpu(),
-                c=train_labels, cmap=cmap, edgecolor='k', s=80, marker='o', label='Train Data (o)')
-    # Scatter test points
-    plt.scatter(dataset['test_input'][:, 0].cpu(), dataset['test_input'][:, 1].cpu(),
-                c=test_labels, cmap=cmap, edgecolor='k', s=80, marker='v', label='Test Data (v)')
+    if plot_datapoints:
+        # Scatter train points
+        plt.scatter(dataset['train_input'][:, 0].cpu(), dataset['train_input'][:, 1].cpu(),
+                    c=train_labels, cmap=cmap, edgecolor='k', s=80, marker='o', label='Train Data (o)')
+        # Scatter test points
+        plt.scatter(dataset['test_input'][:, 0].cpu(), dataset['test_input'][:, 1].cpu(),
+                    c=test_labels, cmap=cmap, edgecolor='k', s=80, marker='v', label='Test Data (v)')
 
     plt.title(title)
     plt.xlabel('x')
@@ -494,3 +557,4 @@ def plot_classifier_probes(model, train_input, train_label, test_input=None, tes
     ax.grid(True)
     plt.tight_layout()
     return fig
+
