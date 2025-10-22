@@ -10,7 +10,7 @@ export hidden_form='square'
 #export hidden_form='kat'
 export hidden_width=2
 #export hidden_width=5
-export hidden_depth=50
+export hidden_depth=1
 #export hidden_depth=10
 #export hidden_depth=5
 export steps=1000 # 10_000
@@ -21,8 +21,8 @@ export k=3
 #export k=5
 export mode='default'
 #export mode='tanh'
-#export spline_noise_scale=0.3
-export spline_noise_scale=0.45
+export spline_noise_scale=0.3
+#export spline_noise_scale=0.45
 export init_mode='native_noise'
 #export init_mode='default'
 #export init_mode='default-0_1'
@@ -84,10 +84,21 @@ export update_grid=false
 #export dataset='cifar10'
 #export dataset='mnist1d'
 #export dataset='boxes_2d'
-export dataset='spiral'
+#export dataset='spiral'
 #export dataset='and'
 #export dataset='or'
 #export dataset='xor'
+export dataset='iris'
+#export dataset='wine'
+#export dataset='breast_cancer'
+#export dataset='digits'
+#export dataset='glass'
+#export dataset='ionosphere'
+#export dataset='sonar'
+#export dataset='heart_disease'
+#export dataset='pima_diabetes'
+#export dataset='haberman'
+export batch=-1 #32 #-1
 export moon_noise_level=0.5
 export random_distribution='uniform'
 export random_input_dim=5
@@ -151,6 +162,7 @@ python src/trainer.py \
     --affine_trainable $affine_trainable \
     --update_grid $update_grid \
     --dataset $dataset \
+    --batch $batch \
     --moon_noise_level $moon_noise_level \
     --random_distribution $random_distribution \
     --random_input_dim $random_input_dim \

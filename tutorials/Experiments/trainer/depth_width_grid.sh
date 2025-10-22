@@ -3,8 +3,8 @@
 # Execution
 export JOB_NUM=1
 # Utility
-export experiment_name="depth_width_grid_34"
-export device_index=0
+export experiment_name="depth_width_grid_36"
+export device_index=1
 export seed=0
 # Model
 export hidden_form='square'
@@ -60,7 +60,9 @@ export affine_trainable=false
 export update_grid=false
 # Dataset
 #export dataset='boxes_2d'
-export dataset='spiral'
+#export dataset='spiral'
+#export dataset='mnist1d'
+export dataset='iris'
 export moon_noise_level=0.5
 export random_distribution='uniform'
 export random_input_dim=5

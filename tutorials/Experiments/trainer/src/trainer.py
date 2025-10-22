@@ -8,6 +8,7 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 from datasets import random_data, moon_data, mnist_data, cifar10_data, make_classification_data, mnist1d_data, boxes_2d_dataset, spiral_data, and_data, or_data, xor_data
+from uci_datasets import iris_data, wine_data, breast_cancer_data, digits_data, glass_data, ionosphere_data, sonar_data, heart_disease_data, pima_diabetes_data, haberman_data
 from plotter import plot_train_data, plot_predictions, plot_violins, plot_violins_extended, plot_summed_violins, plot_mean_std, plot_layerwise_postacts_and_postsplines, plot_layerwise_residual_and_spline_activations, generate_grid_tensor, plot_decision_boundary, plot_heatmap, plot_classifier_probes
 from video import create_video
 from metrics import count_connected_regions, count_artifacts, calc_boundary_length, calc_boundary_curvature, calc_fractal_dimension, total_flops, total_parameters
@@ -77,6 +78,7 @@ def parse_args():
     parser.add_argument('--reg_metric', type=str, choices=['edge_forward_spline_n', 'edge_forward_sum', 'edge_forward_spline_u', 'edge_backward', 'node_backward'], default='edge_forward_spline_n', help='Regularization metric')
     parser.add_argument('--optimizer', type=str, choices=['Adam', 'LBFGS'], default='LBFGS', help='Optimizer for training')
     parser.add_argument('--classification_loss', type=str, choices=['cross_entropy', 'mse'], default='cross_entropy', help='Loss function for classification task')
+    parser.add_argument('--batch', type=int, default=-1, help='Batch size for training. Use -1 for full batch training')
 
     # Trainable Features
     parser.add_argument('--sp_trainable', type=str2bool, default=False, help='Whether to make the spline parameters trainable')
@@ -85,7 +87,7 @@ def parse_args():
     parser.add_argument('--update_grid', type=str2bool, default=False, help='Whether to update the grid during training')
 
     # Dataset
-    parser.add_argument('--dataset', type=str, choices=['random', 'moon', 'mnist', 'cifar10', 'make_classification', 'mnist1d', 'boxes_2d', 'spiral', 'and', 'or', 'xor'], default='random', help='Select Dataset')
+    parser.add_argument('--dataset', type=str, choices=['random', 'moon', 'mnist', 'cifar10', 'make_classification', 'mnist1d', 'boxes_2d', 'spiral', 'and', 'or', 'xor', 'iris', 'wine', 'breast_cancer', 'digits', 'glass', 'ionosphere', 'sonar', 'heart_disease', 'pima_diabetes', 'haberman'], default='random', help='Select Dataset')
     parser.add_argument('--moon_noise_level', type=float, default=0, help='Adjust the noise for the moon dataset in the KAN')
     parser.add_argument('--random_distribution', type=str, choices=['uniform', 'normal'], default='random', help='Random Distribution')
     parser.add_argument('--random_input_dim', type=int, default=2, help='random Dataset Input Dimension')
@@ -253,6 +255,56 @@ def main():
     elif args.dataset == "xor":
         dataset = xor_data(device=device)
         input_dim = 2
+        output_dim = 2
+        output_classes = 2
+    elif args.dataset == "iris":
+        dataset = iris_data(device=device)
+        input_dim = 4
+        output_dim = 3
+        output_classes = 3
+    elif args.dataset == "wine":
+        dataset = wine_data(device=device)
+        input_dim = 13
+        output_dim = 3
+        output_classes = 3
+    elif args.dataset == "breast_cancer":
+        dataset = breast_cancer_data(device=device)
+        input_dim = 30
+        output_dim = 2
+        output_classes = 2
+    elif args.dataset == "digits":
+        dataset = digits_data(device=device)
+        input_dim = 64
+        output_dim = 10
+        output_classes = 10
+    elif args.dataset == "glass":
+        dataset = glass_data(device=device)
+        input_dim = 9
+        output_dim = 6
+        output_classes = 6
+    elif args.dataset == "ionosphere":
+        dataset = ionosphere_data(device=device)
+        input_dim = 34
+        output_dim = 2
+        output_classes = 2
+    elif args.dataset == "sonar":
+        dataset = sonar_data(device=device)
+        input_dim = 60
+        output_dim = 2
+        output_classes = 2
+    elif args.dataset == "heart_disease":
+        dataset = heart_disease_data(device=device)
+        input_dim = 13
+        output_dim = 2
+        output_classes = 2
+    elif args.dataset == "pima_diabetes":
+        dataset = pima_diabetes_data(device=device)
+        input_dim = 8
+        output_dim = 2
+        output_classes = 2
+    elif args.dataset == "haberman":
+        dataset = haberman_data(device=device)
+        input_dim = 3
         output_dim = 2
         output_classes = 2
 
@@ -459,7 +511,8 @@ def main():
                         lamb_entropy=args.lamb_entropy,
                         lamb_coef=args.lamb_coef,
                         lamb_coefdiff=args.lamb_coefdiff,
-                        reg_metric=args.reg_metric
+                        reg_metric=args.reg_metric,
+                        batch=args.batch
                         )
     print(f"train_acc: {results['train_acc'][-1]:2f}, test_acc: {results['test_acc'][-1]:2f}")
 
