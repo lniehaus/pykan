@@ -76,7 +76,7 @@ def parse_args():
     parser.add_argument('--lamb_coef', type=float, default=0.0, help='Weight for the coefficient loss')
     parser.add_argument('--lamb_coefdiff', type=float, default=0.0, help='Weight for the coefficient difference loss')
     parser.add_argument('--reg_metric', type=str, choices=['edge_forward_spline_n', 'edge_forward_sum', 'edge_forward_spline_u', 'edge_backward', 'node_backward'], default='edge_forward_spline_n', help='Regularization metric')
-    parser.add_argument('--optimizer', type=str, choices=['Adam', 'LBFGS'], default='LBFGS', help='Optimizer for training')
+    parser.add_argument('--optimizer', type=str, choices=['Adam', 'LBFGS', 'Muon'], default='LBFGS', help='Optimizer for training')
     parser.add_argument('--classification_loss', type=str, choices=['cross_entropy', 'mse'], default='cross_entropy', help='Loss function for classification task')
     parser.add_argument('--batch', type=int, default=-1, help='Batch size for training. Use -1 for full batch training')
 

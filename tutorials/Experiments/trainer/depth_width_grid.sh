@@ -3,7 +3,7 @@
 # Execution
 export JOB_NUM=1
 # Utility
-export experiment_name="depth_width_grid_36"
+export experiment_name="depth_width_grid_38"
 export device_index=1
 export seed=0
 # Model
@@ -44,7 +44,8 @@ export reg_metric='edge_forward_spline_n'
 #export reg_metric='edge_backward'
 #export reg_metric='node_backward'
 #export optimizer='LBFGS' # Adam LBFGS
-export optimizer='Adam'
+#export optimizer='Adam'
+export optimizer='Muon'
 
 # Trainable On
 export base_fun='silu'
@@ -60,9 +61,9 @@ export affine_trainable=false
 export update_grid=false
 # Dataset
 #export dataset='boxes_2d'
-#export dataset='spiral'
+export dataset='spiral'
 #export dataset='mnist1d'
-export dataset='iris'
+#export dataset='iris'
 export moon_noise_level=0.5
 export random_distribution='uniform'
 export random_input_dim=5
@@ -75,7 +76,7 @@ export boxes_n_classes=4
 export boxes_datapoints_per_class=10
 export boxes_normal_std=0.0
 #export boxes_normal_std=-1.0
-export spiral_n_classes=3 #3
+export spiral_n_classes=20 #3
 export spiral_n_samples=1000
 export spiral_n_samples=$((spiral_n_classes * 500))
 export spiral_noise=0.4
@@ -118,6 +119,10 @@ echo "EXPERIMENT_NAME: $experiment_name"
 depths=(695 483 335 233 162 112 78 54 37 26 18 12 8 6 4 2 1 0)
 widths=(695 483 335 233 162 112 78 54 37 26 18 12 8 6 4 2 1)
 grids=(695 483 335 233 162 112 78 54 37 26 18 12 8 6 4 2 1)
+
+depths=(112 78 54 37 26 18 12 8 6 4 2 1 0)
+widths=(112 78 54 37 26 18 12 8 6 4 2 1)
+grids=(112 78 54 37 26 18 12 8 6 4 2 1)
 
 first_execution=true
 index=0

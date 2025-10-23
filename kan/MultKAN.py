@@ -1567,8 +1567,50 @@ class MultKAN(nn.Module):
 
         if opt == "Adam":
             optimizer = torch.optim.Adam(self.get_params(), lr=lr)
+            optimizer_muon = None
+            optimizer_other = None
         elif opt == "LBFGS":
             optimizer = LBFGS(self.get_params(), lr=lr, history_size=10, line_search_fn="strong_wolfe", tolerance_grad=1e-32, tolerance_change=1e-32, tolerance_ys=1e-32)
+            optimizer_muon = None
+            optimizer_other = None
+        elif opt == "Muon":
+            # Muon only supports 2D parameters; split parameter groups accordingly.
+            # Use named_parameters so we can print informative names while grouping.
+            params_2d = []
+            params_other = []
+            names_2d = []
+            names_other = []
+            for name, p in self.named_parameters():
+                if p.dim() == 2:
+                    params_2d.append(p)
+                    names_2d.append(name)
+                    print(f"Muon 2D param: {name} shape={tuple(p.shape)}")
+                else:
+                    params_other.append(p)
+                    names_other.append(name)
+                    print(f"Non-Muon param: {name} shape={tuple(p.shape)}")
+
+            print("Muon grouping -> 2D:", len(params_2d), "others:", len(params_other))
+
+            optimizer = None  # not used in Muon branch
+            optimizer_muon = None
+            optimizer_other = None
+
+            if len(params_2d) > 0:
+                optimizer_muon = torch.optim.Muon(
+                    params_2d,
+                    lr=0.001,
+                    weight_decay=0.1,
+                    momentum=0.95,
+                    nesterov=True,
+                    ns_coefficients=(3.4445, -4.775, 2.0315),
+                    eps=1e-07,
+                    ns_steps=5,
+                    adjust_lr_fn=None,
+                )
+            # Use Adam for 1D and other unsupported params (biases, scalars, vectors, tensors [coefs])
+            if len(params_other) > 0:
+                optimizer_other = torch.optim.Adam(params_other, lr=lr)
 
         results = {}
         results['train_loss'] = []
@@ -1589,6 +1631,7 @@ class MultKAN(nn.Module):
 
         def closure():
             global train_loss, reg_
+            # In LBFGS we use this closure; for other opts we compute manually.
             optimizer.zero_grad()
             pred = self.forward(dataset['train_input'][train_id], singularity_avoiding=singularity_avoiding, y_th=y_th)
             train_loss = loss_fn(pred, dataset['train_label'][train_id])
@@ -1643,6 +1686,35 @@ class MultKAN(nn.Module):
                 optimizer.zero_grad()
                 loss.backward()
                 optimizer.step()
+
+            if opt == "Muon":
+                # Manual forward/backward to support stepping two optimizers
+                pred = self.forward(dataset['train_input'][train_id], singularity_avoiding=singularity_avoiding, y_th=y_th)
+                train_loss = loss_fn(pred, dataset['train_label'][train_id])
+                if self.save_act:
+                    if reg_metric == 'edge_backward':
+                        self.attribute()
+                    if reg_metric == 'node_backward':
+                        self.node_attribute()
+                    reg_ = self.get_reg(reg_metric, lamb_l1, lamb_entropy, lamb_coef, lamb_coefdiff)
+                else:
+                    reg_ = torch.tensor(0.)
+                loss = train_loss + lamb * reg_
+
+                # Zero grads across both optimizer groups
+                if optimizer_muon is not None:
+                    optimizer_muon.zero_grad()
+                if optimizer_other is not None:
+                    optimizer_other.zero_grad()
+                loss.backward()
+                if optimizer_muon is not None:
+                    optimizer_muon.step()
+                if optimizer_other is not None:
+                    optimizer_other.step()
+                if optimizer_muon is None and optimizer_other is None:
+                    # Fallback case where we created a generic optimizer
+                    optimizer.zero_grad()
+                    optimizer.step()
 
             test_loss = loss_fn_eval(self.forward(dataset['test_input'][test_id]), dataset['test_label'][test_id])
             
