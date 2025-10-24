@@ -3,7 +3,7 @@
 # Execution
 export JOB_NUM=1
 # Utility
-export experiment_name="depth_width_grid_38"
+export experiment_name="depth_width_grid_41"
 export device_index=1
 export seed=0
 # Model

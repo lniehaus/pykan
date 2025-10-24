@@ -558,13 +558,16 @@ def main():
         mode='act'
     )
     mlflow.log_figure(fig, "kan-act-violins-trained.png")
-    fig = plot_violins(
-        model=model, 
-        sample_size=10_000, 
-        title=f"Train Accuracy: {results['train_acc'][-1]:.2f}, Width: {args.hidden_width}, Init Mode: {args.init_mode}",
-        mode='grad'
-    )
-    mlflow.log_figure(fig, "kan-grad-violins-trained.png")
+
+    if args.optimizer != "Muon":
+        # Muon optimizer does not leave gradients, which could be plotted. this then trows an error.
+        fig = plot_violins(
+            model=model, 
+            sample_size=10_000, 
+            title=f"Train Accuracy: {results['train_acc'][-1]:.2f}, Width: {args.hidden_width}, Init Mode: {args.init_mode}",
+            mode='grad'
+        )
+        mlflow.log_figure(fig, "kan-grad-violins-trained.png")
 
     # # Update plot_violins_extended call
     # fig = plot_violins_extended(
