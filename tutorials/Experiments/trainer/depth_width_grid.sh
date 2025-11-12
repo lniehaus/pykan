@@ -3,7 +3,7 @@
 # Execution
 export JOB_NUM=1
 # Utility
-export experiment_name="depth_width_grid_41"
+export experiment_name="depth_width_grid_65"
 export device_index=1
 export seed=0
 # Model
@@ -44,8 +44,8 @@ export reg_metric='edge_forward_spline_n'
 #export reg_metric='edge_backward'
 #export reg_metric='node_backward'
 #export optimizer='LBFGS' # Adam LBFGS
-#export optimizer='Adam'
-export optimizer='Muon'
+export optimizer='Adam'
+#export optimizer='Muon'
 
 # Trainable On
 export base_fun='silu'
@@ -61,9 +61,13 @@ export affine_trainable=false
 export update_grid=false
 # Dataset
 #export dataset='boxes_2d'
-export dataset='spiral'
+#export dataset='spiral'
+export dataset='mnist'
 #export dataset='mnist1d'
 #export dataset='iris'
+#export dataset='wine'
+#export dataset='breast_cancer'
+#export dataset='digits'
 export moon_noise_level=0.5
 export random_distribution='uniform'
 export random_input_dim=5
@@ -112,17 +116,17 @@ echo "EXPERIMENT_NAME: $experiment_name"
 # grids=(400 380 360 340 320 300 280 260 240 220 200 180 160 140 120 100 80 60 40 20 10 5 4 3 2 1)
 
 
-# depths=(1000 695 483 335 233 162 112 78 54 37 26 18 12 8 6 4 2 1 0)
-# widths=(1000 695 483 335 233 162 112 78 54 37 26 18 12 8 6 4 2 1)
-# grids=(1000 695 483 335 233 162 112 78 54 37 26 18 12 8 6 4 2 1)
+depths=(1000 695 483 335 233 162 112 78 54 37 26 18 12 8 6 4 2 1 0)
+widths=(1000 695 483 335 233 162 112 78 54 37 26 18 12 8 6 4 2 1)
+grids=(1000 695 483 335 233 162 112 78 54 37 26 18 12 8 6 4 2 1)
 
-depths=(695 483 335 233 162 112 78 54 37 26 18 12 8 6 4 2 1 0)
-widths=(695 483 335 233 162 112 78 54 37 26 18 12 8 6 4 2 1)
-grids=(695 483 335 233 162 112 78 54 37 26 18 12 8 6 4 2 1)
+# depths=(695 483 335 233 162 112 78 54 37 26 18 12 8 6 4 2 1 0)
+# widths=(695 483 335 233 162 112 78 54 37 26 18 12 8 6 4 2 1)
+# grids=(695 483 335 233 162 112 78 54 37 26 18 12 8 6 4 2 1)
 
-depths=(112 78 54 37 26 18 12 8 6 4 2 1 0)
-widths=(112 78 54 37 26 18 12 8 6 4 2 1)
-grids=(112 78 54 37 26 18 12 8 6 4 2 1)
+# depths=(112 78 54 37 26 18 12 8 6 4 2 1 0)
+# widths=(112 78 54 37 26 18 12 8 6 4 2 1)
+# grids=(112 78 54 37 26 18 12 8 6 4 2 1)
 
 first_execution=true
 index=0

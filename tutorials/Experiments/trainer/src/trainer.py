@@ -400,50 +400,51 @@ def main():
 
     model(dataset['train_input'])
 
-    fig = plot_layerwise_postacts_and_postsplines(
-        model=model,
-        title=f"Layerwise Postacts & Postsplines - Width: {args.hidden_width}, Init Mode: {args.init_mode}"
-    )
-    mlflow.log_figure(fig, "layerwise_postacts_and_postsplines-initialized.png")
+    if len(width) <= 100:
+        fig = plot_layerwise_postacts_and_postsplines(
+            model=model,
+            title=f"Layerwise Postacts & Postsplines - Width: {args.hidden_width}, Init Mode: {args.init_mode}"
+        )
+        mlflow.log_figure(fig, "layerwise_postacts_and_postsplines-initialized.png")
 
-    fig = plot_layerwise_residual_and_spline_activations(
-        model=model,
-        title=f"Layerwise Residual & Spline Activations - Width: {args.hidden_width}, Init Mode: {args.init_mode}"
-    )
-    mlflow.log_figure(fig, "layerwise_residual_and_spline_activations-initialized.png")
+        fig = plot_layerwise_residual_and_spline_activations(
+            model=model,
+            title=f"Layerwise Residual & Spline Activations - Width: {args.hidden_width}, Init Mode: {args.init_mode}"
+        )
+        mlflow.log_figure(fig, "layerwise_residual_and_spline_activations-initialized.png")
 
-    # Update plot_violins call
-    fig = plot_violins(
-        model=model, 
-        sample_size=10_000, 
-        title=f"Train Accuracy: Width: {args.hidden_width}, Init Mode: {args.init_mode}",
-        mode='coef'
-    )
-    mlflow.log_figure(fig, "kan-coef-violins-initialized.png")
-    fig = plot_violins(
-        model=model, 
-        sample_size=10_000, 
-        title=f"Train Accuracy: Width: {args.hidden_width}, Init Mode: {args.init_mode}",
-        mode='act'
-    )
-    mlflow.log_figure(fig, "kan-act-violins-initialized.png")
+        # Update plot_violins call
+        fig = plot_violins(
+            model=model, 
+            sample_size=10_000, 
+            title=f"Train Accuracy: Width: {args.hidden_width}, Init Mode: {args.init_mode}",
+            mode='coef'
+        )
+        mlflow.log_figure(fig, "kan-coef-violins-initialized.png")
+        fig = plot_violins(
+            model=model, 
+            sample_size=10_000, 
+            title=f"Train Accuracy: Width: {args.hidden_width}, Init Mode: {args.init_mode}",
+            mode='act'
+        )
+        mlflow.log_figure(fig, "kan-act-violins-initialized.png")
 
-    # # Update plot_violins_extended call
-    # fig = plot_violins_extended(
-    #     model=model, 
-    #     dataset=dataset, 
-    #     sample_size=100, 
-    #     title=f"Train Accuracy: Width: {args.hidden_width}, Init Mode: {args.init_mode}"
-    # )
-    # mlflow.log_figure(fig, "kan-activations-violins-extended-initialized.png")
+        # # Update plot_violins_extended call
+        # fig = plot_violins_extended(
+        #     model=model, 
+        #     dataset=dataset, 
+        #     sample_size=100, 
+        #     title=f"Train Accuracy: Width: {args.hidden_width}, Init Mode: {args.init_mode}"
+        # )
+        # mlflow.log_figure(fig, "kan-activations-violins-extended-initialized.png")
 
-    fig = plot_summed_violins(
-        model=model, 
-        sample_size=10_000, 
-        title=f"Train Accuracy: Width: {args.hidden_width}, Init Mode: {args.init_mode}",
-        mode='act'
-    )
-    mlflow.log_figure(fig, "kan-act-summed-violins-initialized.png")
+        fig = plot_summed_violins(
+            model=model, 
+            sample_size=10_000, 
+            title=f"Train Accuracy: Width: {args.hidden_width}, Init Mode: {args.init_mode}",
+            mode='act'
+        )
+        mlflow.log_figure(fig, "kan-act-summed-violins-initialized.png")
 
     # Update plot_mean_std call
     fig = plot_mean_std(
@@ -532,66 +533,67 @@ def main():
 
     model(dataset['train_input'])
 
-    fig = plot_layerwise_postacts_and_postsplines(
-        model,
-        title=f"Layerwise Postacts & Postsplines - Train Acc: {max(results['train_acc']):.2f}, Width: {args.hidden_width}, Init Mode: {args.init_mode}"
-    )
-    mlflow.log_figure(fig, "layerwise_postacts_and_postsplines-trained.png")
+    if len(width) <= 100:
+        fig = plot_layerwise_postacts_and_postsplines(
+            model,
+            title=f"Layerwise Postacts & Postsplines - Train Acc: {max(results['train_acc']):.2f}, Width: {args.hidden_width}, Init Mode: {args.init_mode}"
+        )
+        mlflow.log_figure(fig, "layerwise_postacts_and_postsplines-trained.png")
 
-    fig = plot_layerwise_residual_and_spline_activations(
-        model=model,
-        title=f"Layerwise Residual & Spline Activations - Train Acc: {max(results['train_acc']):.2f}, Width: {args.hidden_width}, Init Mode: {args.init_mode}"
-    )
-    mlflow.log_figure(fig, "layerwise_residual_and_spline_activations-trained.png")
+        fig = plot_layerwise_residual_and_spline_activations(
+            model=model,
+            title=f"Layerwise Residual & Spline Activations - Train Acc: {max(results['train_acc']):.2f}, Width: {args.hidden_width}, Init Mode: {args.init_mode}"
+        )
+        mlflow.log_figure(fig, "layerwise_residual_and_spline_activations-trained.png")
 
-    fig = plot_violins(
-        model=model, 
-        sample_size=10_000, 
-        title=f"Train Accuracy: {results['train_acc'][-1]:.2f}, Width: {args.hidden_width}, Init Mode: {args.init_mode}",
-        mode='coef'
-    )
-    mlflow.log_figure(fig, "kan-coef-violins-trained.png")
-    fig = plot_violins(
-        model=model, 
-        sample_size=10_000, 
-        title=f"Train Accuracy: {results['train_acc'][-1]:.2f}, Width: {args.hidden_width}, Init Mode: {args.init_mode}",
-        mode='act'
-    )
-    mlflow.log_figure(fig, "kan-act-violins-trained.png")
-
-    if args.optimizer != "Muon":
-        # Muon optimizer does not leave gradients, which could be plotted. this then trows an error.
         fig = plot_violins(
             model=model, 
             sample_size=10_000, 
             title=f"Train Accuracy: {results['train_acc'][-1]:.2f}, Width: {args.hidden_width}, Init Mode: {args.init_mode}",
-            mode='grad'
+            mode='coef'
         )
-        mlflow.log_figure(fig, "kan-grad-violins-trained.png")
+        mlflow.log_figure(fig, "kan-coef-violins-trained.png")
+        fig = plot_violins(
+            model=model, 
+            sample_size=10_000, 
+            title=f"Train Accuracy: {results['train_acc'][-1]:.2f}, Width: {args.hidden_width}, Init Mode: {args.init_mode}",
+            mode='act'
+        )
+        mlflow.log_figure(fig, "kan-act-violins-trained.png")
 
-    # # Update plot_violins_extended call
-    # fig = plot_violins_extended(
-    #     model=model, 
-    #     dataset=dataset, 
-    #     sample_size=100, 
-    #     title=f"Train Accuracy: {max(results['train_acc']):.2f}, Width: {args.hidden_width}, Init Mode: {args.init_mode}"
-    # )
-    # mlflow.log_figure(fig, "kan-activations-violins-extended-trained.png")
+        if args.optimizer != "Muon":
+            # Muon optimizer does not leave gradients, which could be plotted. this then trows an error.
+            fig = plot_violins(
+                model=model, 
+                sample_size=10_000, 
+                title=f"Train Accuracy: {results['train_acc'][-1]:.2f}, Width: {args.hidden_width}, Init Mode: {args.init_mode}",
+                mode='grad'
+            )
+            mlflow.log_figure(fig, "kan-grad-violins-trained.png")
 
-    fig = plot_summed_violins(
-        model=model, 
-        sample_size=10_000, 
-        title=f"Train Accuracy: Width: {args.hidden_width}, Init Mode: {args.init_mode}",
-        mode='act'
-    )
-    mlflow.log_figure(fig, "kan-act-summed-violins-trained.png")
+        # # Update plot_violins_extended call
+        # fig = plot_violins_extended(
+        #     model=model, 
+        #     dataset=dataset, 
+        #     sample_size=100, 
+        #     title=f"Train Accuracy: {max(results['train_acc']):.2f}, Width: {args.hidden_width}, Init Mode: {args.init_mode}"
+        # )
+        # mlflow.log_figure(fig, "kan-activations-violins-extended-trained.png")
 
-    # Update plot_mean_std call
-    fig = plot_mean_std(
-        model, 
-        title=f"Train Accuracy: {max(results['train_acc']):.2f}, Width: {args.hidden_width}, Init Mode: {args.init_mode}"
-    )
-    mlflow.log_figure(fig, "layer_mean_std-trained.png")
+        fig = plot_summed_violins(
+            model=model, 
+            sample_size=10_000, 
+            title=f"Train Accuracy: Width: {args.hidden_width}, Init Mode: {args.init_mode}",
+            mode='act'
+        )
+        mlflow.log_figure(fig, "kan-act-summed-violins-trained.png")
+
+        # Update plot_mean_std call
+        fig = plot_mean_std(
+            model, 
+            title=f"Train Accuracy: {max(results['train_acc']):.2f}, Width: {args.hidden_width}, Init Mode: {args.init_mode}"
+        )
+        mlflow.log_figure(fig, "layer_mean_std-trained.png")
 
 
     #if args.plot_trained_model:

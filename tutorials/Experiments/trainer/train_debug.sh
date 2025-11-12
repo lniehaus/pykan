@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # Utility
-export experiment_name="train-debug-6"
+export experiment_name="train-debug-10"
 export device_index=1
 export seed=0
 # Model
@@ -13,7 +13,7 @@ export hidden_width=2
 export hidden_depth=1
 #export hidden_depth=10
 #export hidden_depth=5
-export steps=10_000 # 10_000
+export steps=10 # 10_000
 export grid=5
 #export grid=40
 #export grid=3
@@ -59,9 +59,9 @@ export reg_metric='edge_forward_spline_n'
 #export reg_metric='edge_forward_spline_u'
 #export reg_metric='edge_backward'
 #export reg_metric='node_backward'
-#export optimizer='LBFGS' # Adam LBFGS
+export optimizer='LBFGS' # Adam LBFGS
 #export optimizer='Adam'
-export optimizer='Muon'
+#export optimizer='Muon'
 
 # Trainable On
 export base_fun='silu'

@@ -1575,30 +1575,45 @@ class MultKAN(nn.Module):
             optimizer_other = None
         elif opt == "Muon":
             # Muon only supports 2D parameters; split parameter groups accordingly.
-            # Use named_parameters so we can print informative names while grouping.
-            params_2d = []
-            params_other = []
-            names_2d = []
+            # Additionally, create proxy 2D Parameters for 3D tensors by flattening along the last dims.
+            # During training, copy grads from original 3D params to their proxy and let Muon update the proxy,
+            # which shares storage with the original via .data.view(...).
+            params_muon = []          # Parameters (2D originals + 3D flattened proxies) optimized by Muon
+            params_other = []         # All remaining params (1D, >3D, etc.) optimized by Adam
+            flat3d_map = []           # List of tuples (flat_param, orig_3d_param)
+
+            names_muon = []
             names_other = []
+
             for name, p in self.named_parameters():
                 if p.dim() == 2:
-                    params_2d.append(p)
-                    names_2d.append(name)
+                    params_muon.append(p)
+                    names_muon.append(name)
                     print(f"Muon 2D param: {name} shape={tuple(p.shape)}")
+                elif p.dim() == 3:
+                    # Create a proxy nn.Parameter that is a view of the original 3D tensor with shape (d0, d1*d2)
+                    # Use .data to avoid tracking this reshape in autograd; we'll manually move grads.
+                    d0, d1, d2 = p.shape
+                    flat_view = p.data.view(d0, d1 * d2)
+                    flat_param = nn.Parameter(flat_view, requires_grad=True)
+                    params_muon.append(flat_param)
+                    flat3d_map.append((flat_param, p))
+                    names_muon.append(name + "[flat3d]")
+                    print(f"Muon 3D->2D proxy: {name} orig={tuple(p.shape)} flat={(d0, d1*d2)}")
                 else:
                     params_other.append(p)
                     names_other.append(name)
                     print(f"Non-Muon param: {name} shape={tuple(p.shape)}")
 
-            print("Muon grouping -> 2D:", len(params_2d), "others:", len(params_other))
+            print("Muon grouping -> Muon:", len(params_muon), "others:", len(params_other))
 
             optimizer = None  # not used in Muon branch
             optimizer_muon = None
             optimizer_other = None
 
-            if len(params_2d) > 0:
+            if len(params_muon) > 0:
                 optimizer_muon = torch.optim.Muon(
-                    params_2d,
+                    params_muon,
                     lr=0.001,
                     weight_decay=0.1,
                     momentum=0.95,
@@ -1608,7 +1623,7 @@ class MultKAN(nn.Module):
                     ns_steps=5,
                     adjust_lr_fn=None,
                 )
-            # Use Adam for 1D and other unsupported params (biases, scalars, vectors, tensors [coefs])
+            # Use Adam for 1D and other unsupported params (biases, scalars, vectors, >3D tensors)
             if len(params_other) > 0:
                 optimizer_other = torch.optim.Adam(params_other, lr=lr)
 
@@ -1707,6 +1722,15 @@ class MultKAN(nn.Module):
                 if optimizer_other is not None:
                     optimizer_other.zero_grad()
                 loss.backward()
+                # For 3D params flattened into proxy 2D Parameters, move grads to the proxies and clear originals
+                if 'flat3d_map' in locals() and len(flat3d_map) > 0:
+                    for flat_param, orig_param in flat3d_map:
+                        if orig_param.grad is not None:
+                            # reshape orig grad (d0,d1,d2) -> (d0, d1*d2)
+                            g = orig_param.grad.data.view(orig_param.shape[0], -1).contiguous()
+                            flat_param.grad = g
+                            # prevent accumulating grads on original since Muon won't step it
+                            orig_param.grad = None
                 if optimizer_muon is not None:
                     optimizer_muon.step()
                 if optimizer_other is not None:
